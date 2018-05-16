@@ -11,3 +11,4 @@ contract Community {
 }
 
 // http://solidity.readthedocs.io/en/v0.4.23/types.html?highlight=view#enums
+// https://ethereum.stackexchange.com/questions/11556/use-string-type-or-bytes32
