@@ -3,11 +3,11 @@ import "./Community.sol";
 
 contract CandidateRegistration is Community {
 	address constant candidateDeleted = address(0);
-	uint constant dayInBlock = 5;
-	uint constant weekInBlock = 7 * 5760;
+	uint constant dayInBlock = 5760;
+	// uint constant weekInBlock = 7 * 5760;
 
 	uint public endCandidateRegistrationBlock;
-	uint public endVotingBlock;
+	// uint public endVotingBlock;
 
 	address[] public candidatesIdx;
 	mapping (address => Candidate) public registeredCandidate;
@@ -20,11 +20,20 @@ contract CandidateRegistration is Community {
 		_;
 	}
 
+	modifier onlyOneRegistration {
+		require(
+			registeredCandidate[msg.sender].identity != msg.sender,
+			"Candidate already register."
+		);
+		_;
+	}
+
     /**
     * The logs that will be emitted in every step of the contract's life cycle.
     */
 	event CandidateRegistrationStart(uint endCandidateRegistrationBlock);
-	event CandidateRegistrationSuccess(bytes32 pseudo, CommunityChoices community, address identity);
+	event CandidateRegistered(bytes32 pseudo, CommunityChoices community, address identity);
+	event CandidateDeregistration(address identity);
 
 	constructor() public {
 		/**
@@ -32,12 +41,12 @@ contract CandidateRegistration is Community {
 		* we defined a day 5760 blocks. 
 		*/
 		endCandidateRegistrationBlock = block.number + dayInBlock;
-		endVotingBlock = block.number + (2 * dayInBlock);
+		// endVotingBlock = block.number + (2 * dayInBlock);
 
 		emit CandidateRegistrationStart(endCandidateRegistrationBlock);
 	}
 
-	function registerCandidate(bytes32 pseudo, CommunityChoices community) public onlyDuringRegistrationPeriod {
+	function registerCandidate(bytes32 pseudo, CommunityChoices community) public onlyDuringRegistrationPeriod onlyOneRegistration {
 		// require(candidate == address(0));
 		Candidate memory candidate = Candidate(pseudo, community, msg.sender);
 
@@ -49,7 +58,7 @@ contract CandidateRegistration is Community {
 		registeredCandidate[msg.sender] = candidate;
  		candidatesIdx.push(msg.sender);
 
-        // emit CandidateRegistrationSuccess(candidate.pseudo, candidate.community, candidate.identity);
+        emit CandidateRegistered(candidate.pseudo, candidate.community, candidate.identity);
 	}
 
 	function deregisterCandidate() public {
@@ -68,6 +77,8 @@ contract CandidateRegistration is Community {
     			break;
     		}
     	}
+
+    	emit CandidateDeregistration(msg.sender);
 	}
 
     function getCandidatesCount() public view returns(uint) {
@@ -83,8 +94,8 @@ contract CandidateRegistration is Community {
         return candidatesCount;
     }
 
-    function getCandidate(uint index) public view returns(bytes32, CommunityChoices, address) {
-    	address candidateIdx = candidatesIdx[index];
+    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityChoices, address) {
+    	// address candidateIdx = candidatesIdx[index];
         return (registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, registeredCandidate[candidateIdx].identity);
     }
 }
@@ -92,3 +103,4 @@ contract CandidateRegistration is Community {
 // https://medium.com/loom-network/ethereum-solidity-memory-vs-storage-how-to-initialize-an-array-inside-a-struct-184baf6aa2eb
 // https://ethereum.stackexchange.com/questions/13201/if-everyone-runs-the-same-transaction-why-does-only-the-miner-get-gas?rq=
 // https://ethereum.stackexchange.com/questions/31094/loop-optimisation-for-gas-usage
+// two modifiers http://solidity.readthedocs.io/en/v0.2.1/common-patterns.html
