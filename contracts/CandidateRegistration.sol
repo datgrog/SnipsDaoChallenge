@@ -2,15 +2,15 @@ pragma solidity ^0.4.23;
 import "./Community.sol";
 
 contract CandidateRegistration is Community {
-	uint constant candidateDeleted = 999999999;
+	address constant candidateDeleted = address(0);
 	uint constant dayInBlock = 5;
 	uint constant weekInBlock = 7 * 5760;
 
 	uint public endCandidateRegistrationBlock;
 	uint public endVotingBlock;
 
-	uint[] public candidatesIdx;
-	mapping (uint => Candidate) public registeredCandidate;
+	address[] public candidatesIdx;
+	mapping (address => Candidate) public registeredCandidate;
 
 	modifier onlyDuringRegistrationPeriod {
 		require(
@@ -42,26 +42,31 @@ contract CandidateRegistration is Community {
 		Candidate memory candidate = Candidate(pseudo, community, msg.sender);
 
 		/**
+		* By using a mapping we ensure candidate could not register for more than one community.
 		* We save candidate with a mapping and keep tracks of all entries indexes, 
 		* by saving them within an array, allowing the contract to iterates over all candidates. 
 		*/
-		registeredCandidate[candidatesIdx.length] = candidate;
- 		candidatesIdx.push(candidatesIdx.length);
+		registeredCandidate[msg.sender] = candidate;
+ 		candidatesIdx.push(msg.sender);
 
         // emit CandidateRegistrationSuccess(candidate.pseudo, candidate.community, candidate.identity);
 	}
 
 	function deregisterCandidate() public {
 		// TODO modifier to ensure the candidate is not the current representative of any communities!
-	    for(uint i = 0; i<candidatesIdx.length; i++){
-        	if (candidatesIdx[i] != candidateDeleted) {
-        		if (registeredCandidate[candidatesIdx[i]].identity == msg.sender) {
-        			// we find the index related to the sender's candidate who want to deregister,
-        			// we do so by assigning this constant value
-        			candidatesIdx[i] = candidateDeleted;
-        			break;
-        		}
-        	}
+	    for(uint i = 0; i<candidatesIdx.length; i++) {
+    		if (candidatesIdx[i] == msg.sender) {
+    			/**
+    			* Find the index related to the sender who want to deregister.
+    			* If the sender is a candidate it would deregister if not it would do nothing but paying gas.
+    			* Deregister means we reset candidatesIdx[x] by candidateDeleted constant value.
+    			* The mapping's value related to the eth@ is not cleared as it does not affect app behavior.
+    			*/
+    			// BUG ? It also reset the related value within the mapping, which in fact is proper.
+    			// => probably pointer behaviour
+    			candidatesIdx[i] = candidateDeleted;
+    			break;
+    		}
     	}
 	}
 
@@ -79,7 +84,8 @@ contract CandidateRegistration is Community {
     }
 
     function getCandidate(uint index) public view returns(bytes32, CommunityChoices, address) {
-        return (registeredCandidate[index].pseudo, registeredCandidate[index].community, registeredCandidate[index].identity);
+    	address candidateIdx = candidatesIdx[index];
+        return (registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, registeredCandidate[candidateIdx].identity);
     }
 }
 

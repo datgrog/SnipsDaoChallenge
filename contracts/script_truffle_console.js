@@ -20,8 +20,8 @@ account3 = web3.eth.accounts[3];
 CandidateRegistration.deployed().then(inst => { CandidateRegistrationInstance = inst });
 CandidateRegistrationInstance.registerCandidate("grog", 1, {from: account0});
 CandidateRegistrationInstance.registerCandidate("groguette", 2, {from: account1});
-CandidateRegistrationInstance.registerCandidate("grogzator", 0, {from: account1});
-CandidateRegistrationInstance.registerCandidate("grogbitch", 3, {from: account0});
+CandidateRegistrationInstance.registerCandidate("grogzator", 0, {from: account2});
+CandidateRegistrationInstance.registerCandidate("grogbitch", 3, {from: account3});
 
 CandidateRegistrationInstance.deregisterCandidate({from: account0});
 
