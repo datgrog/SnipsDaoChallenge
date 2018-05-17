@@ -94,9 +94,15 @@ contract CommunityCandidate {
         return candidatesCount;
     }
 
-    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address) {
-    	// address candidateIdx = candidatesIdx[index];
-        return (registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, registeredCandidate[candidateIdx].identity);
+    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
+        return (
+        	registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, 
+        	registeredCandidate[candidateIdx].identity, registeredCandidate[candidateIdx].voteCount
+        );
+    }
+
+    function quickVote(address candidateIdx) public {
+    	registeredCandidate[candidateIdx].voteCount++;
     }
 }
 
@@ -104,3 +110,4 @@ contract CommunityCandidate {
 // https://ethereum.stackexchange.com/questions/13201/if-everyone-runs-the-same-transaction-why-does-only-the-miner-get-gas?rq=
 // https://ethereum.stackexchange.com/questions/31094/loop-optimisation-for-gas-usage
 // two modifiers http://solidity.readthedocs.io/en/v0.2.1/common-patterns.html
+// https://stackoverflow.com/questions/46104721/solidity-set-value-to-state-variables-the-value-not-changed

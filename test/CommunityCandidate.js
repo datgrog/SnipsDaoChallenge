@@ -26,7 +26,7 @@ contract('CommunityCandidate', function(accounts) {
   	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
 
   	// BlockHeight when constructor was initiate was one block before
-  	const blockNumber = web3.eth.blockNumber - 1;
+  	const blockNumber = web3.eth.blockNumber - 2;
 
   	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
   	assert.equal(endCommunityCandidateBlock.valueOf(), blockNumber + 10, "seems like a day equivalent wasn't found in endCommunityCandidateBlock");

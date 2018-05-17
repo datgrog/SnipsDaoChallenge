@@ -45,3 +45,22 @@ CandidateRegistrationInstance.getCandidatesCount.call()
 
 CandidateRegistrationInstance.deregisterCandidate({from: account1});
 CandidateRegistrationInstance.getCandidate.call(account1);
+
+//
+account0 = web3.eth.accounts[0];
+account1 = web3.eth.accounts[1];
+
+CommunityCandidate.deployed().then(inst => { CommunityCandidateInstance = inst });
+CommunityCandidateInstance.registerCandidate("grog", 0, {from: account0});
+CommunityCandidateInstance.registerCandidate("groguette", 1, {from: account1});
+CommunityElector.deployed().then(inst => { CommunityElectorInstance = inst });
+CommunityElectorInstance.getCandidatesCount.call();
+
+
+CommunityCandidateInstance.getCandidate.call(account1);
+
+// BOTH SEND TX AND MODIFY STATE
+CommunityCandidateInstance.quickVote(account1)
+// CommunityCandidateInstance.quickVote.sendTransaction(account1);
+
+
