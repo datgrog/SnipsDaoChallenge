@@ -33,7 +33,7 @@ contract CandidateRegistration is Community {
     */
 	event CandidateRegistrationStart(uint endCandidateRegistrationBlock);
 	event CandidateRegistered(bytes32 pseudo, CommunityChoices community, address identity);
-	event CandidateDeregistration(address identity);
+	event CandidateDeregistered(address identity);
 
 	constructor() public {
 		/**
@@ -71,14 +71,16 @@ contract CandidateRegistration is Community {
     			* Deregister means we reset candidatesIdx[x] by candidateDeleted constant value.
     			* The mapping's value related to the eth@ is not cleared as it does not affect app behavior.
     			*/
-    			// BUG ? It also reset the related value within the mapping, which in fact is proper.
-    			// => probably pointer behaviour
     			candidatesIdx[i] = candidateDeleted;
     			break;
     		}
     	}
 
-    	emit CandidateDeregistration(msg.sender);
+    	emit CandidateDeregistered(msg.sender);
+	}
+
+	function getCandidatesIdx() public view returns(address[]) {
+		return candidatesIdx;
 	}
 
     function getCandidatesCount() public view returns(uint) {
