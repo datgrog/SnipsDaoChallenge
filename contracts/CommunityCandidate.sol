@@ -1,20 +1,22 @@
 pragma solidity ^0.4.23;
-import "./Community.sol";
+import "./CommunityLib.sol";
 
-contract CandidateRegistration is Community {
+contract CommunityCandidate {
 	address constant candidateDeleted = address(0);
-	uint constant dayInBlock = 5760;
+	uint constant dayInBlock = 10;
+	// uint constant dayInBlock = 5760;
+
 	// uint constant weekInBlock = 7 * 5760;
 
-	uint public endCandidateRegistrationBlock;
+	uint public endCommunityCandidateBlock;
 	// uint public endVotingBlock;
 
 	address[] public candidatesIdx;
-	mapping (address => Candidate) public registeredCandidate;
+	mapping (address => CommunityLib.Candidate) public registeredCandidate;
 
 	modifier onlyDuringRegistrationPeriod {
 		require(
-			block.number <= endCandidateRegistrationBlock,
+			block.number <= endCommunityCandidateBlock,
 			"Registration Period has expired."
 		);
 		_;
@@ -31,8 +33,7 @@ contract CandidateRegistration is Community {
     /**
     * The logs that will be emitted in every step of the contract's life cycle.
     */
-	event CandidateRegistrationStart(uint endCandidateRegistrationBlock);
-	event CandidateRegistered(bytes32 pseudo, CommunityChoices community, address identity);
+	event CandidateRegistered(bytes32 pseudo, CommunityLib.CommunityChoices community, address identity);
 	event CandidateDeregistered(address identity);
 
 	constructor() public {
@@ -40,15 +41,12 @@ contract CandidateRegistration is Community {
 		* As Eth mainet generate new block each 15 sec in avg, 
 		* we defined a day 5760 blocks. 
 		*/
-		endCandidateRegistrationBlock = block.number + dayInBlock;
+		endCommunityCandidateBlock = block.number + dayInBlock;
 		// endVotingBlock = block.number + (2 * dayInBlock);
-
-		emit CandidateRegistrationStart(endCandidateRegistrationBlock);
 	}
 
-	function registerCandidate(bytes32 pseudo, CommunityChoices community) public onlyDuringRegistrationPeriod onlyOneRegistration {
-		// require(candidate == address(0));
-		Candidate memory candidate = Candidate(pseudo, community, msg.sender);
+	function registerCandidate(bytes32 pseudo, CommunityLib.CommunityChoices community) public onlyDuringRegistrationPeriod onlyOneRegistration {
+		CommunityLib.Candidate memory candidate = CommunityLib.Candidate(pseudo, community, msg.sender, 0);
 
 		/**
 		* By using a mapping we ensure candidate could not register for more than one community.
@@ -96,7 +94,7 @@ contract CandidateRegistration is Community {
         return candidatesCount;
     }
 
-    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityChoices, address) {
+    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address) {
     	// address candidateIdx = candidatesIdx[index];
         return (registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, registeredCandidate[candidateIdx].identity);
     }

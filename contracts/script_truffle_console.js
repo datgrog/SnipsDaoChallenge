@@ -1,5 +1,6 @@
 # Playground truffle console
 
+curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"evm_mine","params":[]}'
 truffle migrate --network development --reset
 truffle console --network development
 
@@ -29,7 +30,7 @@ CandidateRegistrationInstance.registerCandidate("grogzator", 2, {from: account2}
 CandidateRegistrationInstance.registerCandidate("grogbitch", 3, {from: account3});
 // CandidateRegistrationInstance.registerCandidate("grogbitch", 3, {from: account3}).then(res => { onchoir = res} );
 
-CandidateRegistrationInstance.deregisterCandidate({from: account0});
+CandidateRegistrationInstance.deregisterCandidate({from: account1});
 
 // CandidateRegistrationInstance.registerCandidate("grog", 1, {from: account0}).then( res => { console.log(res.logs) });
 // CandidateRegistrationInstance.registerCandidate("groguette", 2, {from: account1}).then( res => { console.log(res.logs) });
@@ -40,3 +41,7 @@ CandidateRegistrationInstance.registerCandidate("grogonche", 0, {from: account0}
 
 CandidateRegistrationInstance.candidatesIdx.call(0);
 CandidateRegistrationInstance.endCandidateRegistrationBlock.call();
+CandidateRegistrationInstance.getCandidatesCount.call()
+
+CandidateRegistrationInstance.deregisterCandidate({from: account1});
+CandidateRegistrationInstance.getCandidate.call(account1);

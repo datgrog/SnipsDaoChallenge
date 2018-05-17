@@ -1,33 +1,47 @@
-const CandidateRegistration = artifacts.require("CandidateRegistration");
+const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityEnum = Object.freeze({"Bitcoin":0, "Ethereum":1, "Filecoin":2, "Monero":3 });
 
 // Ganache GUI keeps same wallet which is more convenient for testing
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away
 // HD PATH m/44'/60'/0'/0/account_index
 
-contract('CandidateRegistration', function(accounts) {
+// helper 
+const mineBlock = function () {
+  return new Promise((resolve, reject) => {
+    web3.currentProvider.sendAsync({
+      jsonrpc: "2.0",
+      method: "evm_mine",
+      params: []
+  }, (err, result) => {
+      if(err){ return reject(err) }
+      return resolve(result)
+    });
+  })
+}
 
-  it("should have an endCandidateRegistrationBlock deadline of one day in block equivalent", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
-  	const endCandidateRegistrationBlock = await candidateReg.endCandidateRegistrationBlock.call();
+contract('CommunityCandidate', function(accounts) {
+
+  it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function() {
+  	const candidateReg = await CommunityCandidate.deployed();
+  	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
 
   	// BlockHeight when constructor was initiate was one block before
   	const blockNumber = web3.eth.blockNumber - 1;
 
-  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 we should find 5760
-  	assert.equal(endCandidateRegistrationBlock.valueOf(), blockNumber + 5760, "seems like a day equivalent wasn't found in endCandidateRegistrationBlock");
+  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
+  	assert.equal(endCommunityCandidateBlock.valueOf(), blockNumber + 10, "seems like a day equivalent wasn't found in endCommunityCandidateBlock");
 
   });
 
   it("should have no candidate", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
   });
   
   it("should register a candidate", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	
   	const account0 = web3.eth.accounts[0];
   	
@@ -43,14 +57,14 @@ contract('CandidateRegistration', function(accounts) {
   });
 
   it("should have one candidate", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
   it("should check CandidateRegistered event by register another candidate", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	
   	const account1 = web3.eth.accounts[1];
   	
@@ -67,14 +81,14 @@ contract('CandidateRegistration', function(accounts) {
   });
 
   it("should have two candidates", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
   });
 
   it("should deregistered a candidate given the eth account the request came from", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
 
   	// Sorry Vitalik
   	const candidateToDelIdentity = web3.eth.accounts[1];
@@ -101,10 +115,40 @@ contract('CandidateRegistration', function(accounts) {
   });
 
   it("should have one candidate", async function() {
-  	const candidateReg = await CandidateRegistration.deployed();
+  	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
+  });
+
+
+  it("should not register candidate as the candidate registration period expired", async function() {
+  	const candidateReg = await CommunityCandidate.deployed();
+  	const account3 = web3.eth.accounts[3];
+  	let blockNumber = web3.eth.blockNumber;
+
+  	/**
+    * As it takes a while to go mine a test block,
+    * we modify the constant dayInBlock within the contract CommunityCandidate.sol DIRECTLY 
+    * we do not rely on smartcontract endCommunityCandidateBlock which is approx 5760 blocks
+    */
+  	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
+
+  	while(blockNumber <= endCommunityCandidateBlock) {
+  		await mineBlock();
+  		blockNumber = web3.eth.blockNumber;
+  	}
+
+	assert.isAbove(blockNumber, endCommunityCandidateBlock , "Current blockHeight is not strictly above endCommunityCandidateBlock which is mandatory to trigger revert()");
+  	
+  	// catch the revert() exeception and return true as the test succeed
+  	try {
+  		await candidateReg.registerCandidate("@protocollabs", CommunityEnum.Filecoin, {from: account3});	
+  	} catch (e) {
+      return true;
+    }
+    
+    throw new Error("I should never see this!")
   });
 
 });

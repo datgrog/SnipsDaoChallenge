@@ -3,8 +3,8 @@
 // module.exports = function(deployer) {
 // 	deployer.deploy(SnipsDaoChallenge);
 // };
-const CandidateRegistration = artifacts.require("./CandidateRegistration.sol")
+const CommunityCandidate = artifacts.require("./CommunityCandidate.sol")
 
 module.exports = function(deployer) {
-	deployer.deploy(CandidateRegistration);
+	deployer.deploy(CommunityCandidate);
 };
