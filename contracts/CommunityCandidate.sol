@@ -14,6 +14,12 @@ contract CommunityCandidate {
 	address[] public candidatesIdx;
 	mapping (address => CommunityLib.Candidate) public registeredCandidate;
 
+    // These will be assigned at the construction
+    // phase, where `msg.sender` is the account
+    // creating this contract.
+    address public owner = msg.sender;
+	address public communityElectorAddr;
+
 	modifier onlyDuringRegistrationPeriod {
 		require(
 			block.number <= endCommunityCandidateBlock,
@@ -29,6 +35,15 @@ contract CommunityCandidate {
 		);
 		_;
 	}
+
+    modifier onlyBy(address _account)
+    {
+        require(
+            msg.sender == _account,
+            "Sender not authorized."
+        );
+        _;
+    }
 
     /**
     * The logs that will be emitted in every step of the contract's life cycle.
@@ -99,6 +114,10 @@ contract CommunityCandidate {
         	registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, 
         	registeredCandidate[candidateIdx].identity, registeredCandidate[candidateIdx].voteCount
         );
+    }
+
+    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyBy(owner) {
+    	communityElectorAddr = newCommunityElectorAddr;
     }
 
     function quickVote(address candidateIdx) public {

@@ -1,5 +1,5 @@
 const CommunityCandidate = artifacts.require("CommunityCandidate");
-const CommunityEnum = Object.freeze({"Bitcoin":0, "Ethereum":1, "Filecoin":2, "Monero":3 });
+const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2, "Monero": 3 });
 
 // Ganache GUI keeps same wallet which is more convenient for testing
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away
@@ -21,12 +21,32 @@ const mineBlock = function () {
 
 contract('CommunityCandidate', function(accounts) {
 
+  it("should have owner set to the eth account deploying the contract", async function() {
+    const candidateReg = await CommunityCandidate.deployed();
+    const account0 = "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"; // given mnemonic and hd path
+    const owner = await candidateReg.owner.call();
+
+    assert.equal(owner.valueOf(), account0, "Account0 does not seems to be the original account deploying CommunityCandidate contract.");
+  });
+
+  it("shoud have a reference to CommunityElector contract", async function() {
+    const candidateReg = await CommunityCandidate.deployed();
+    const communityElectorAddr = await candidateReg.communityElectorAddr.call();
+
+    assert.notEqual(communityElectorAddr.valueOf(), "0x0000000000000000000000000000000000000000", "communityElectorAddr should not have default address(0)");
+  });
+
   it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function() {
   	const candidateReg = await CommunityCandidate.deployed();
   	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
 
-  	// BlockHeight when constructor was initiate was one block before
-  	const blockNumber = web3.eth.blockNumber - 2;
+    /**
+    * BlockHeight when CommunityCandidate constructor was called.
+    * As Transactions happen before test execution, we need to sub it from the current blockHeight. 
+    * Ganache default behaviour mines a block for each transaction to confirm them directly 
+    */
+    const BlocksOrTxsBeforeTestExecution = 3;
+  	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
 
   	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
   	assert.equal(endCommunityCandidateBlock.valueOf(), blockNumber + 10, "seems like a day equivalent wasn't found in endCommunityCandidateBlock");
@@ -37,7 +57,7 @@ contract('CommunityCandidate', function(accounts) {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
-	assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
+	  assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
   });
   
   it("should register a candidate", async function() {
@@ -96,21 +116,21 @@ contract('CommunityCandidate', function(accounts) {
   	let candidatesIdx = await candidateReg.getCandidatesIdx();
   	let candidateToDelIdx = -1;
 
-	Object.entries(candidatesIdx).forEach(([key, value]) => {
-		if (candidateToDelIdentity === value ) {
-			candidateToDelIdx = key;
-		}
-	});
+  	Object.entries(candidatesIdx).forEach(([key, value]) => {
+  		if (candidateToDelIdentity === value ) {
+  			candidateToDelIdx = key;
+  		}
+  	});
 
-	if (candidateToDelIdx === -1) { 
-		throw new Error("The candidate to delete should be the one inserted prev so we should find his identity within candidatesIdx!") 
-	}
+  	if (candidateToDelIdx === -1) { 
+  		throw new Error("The candidate to delete should be the one inserted prev so we should find his identity within candidatesIdx!") 
+  	}
 
   	await candidateReg.deregisterCandidate({from: candidateToDelIdentity});
 
-	candidatesIdx = await candidateReg.getCandidatesIdx();
+	  candidatesIdx = await candidateReg.getCandidatesIdx();
 
-  	assert.equal(candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", "The is different than 1");
+  	assert.equal(candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", "Deregister candidateIdx should have default address(0)");
 
   });
 
@@ -118,7 +138,7 @@ contract('CommunityCandidate', function(accounts) {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
-	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
+	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
 
