@@ -115,7 +115,7 @@ contract CommunityCandidate {
     	communityElectorAddr = newCommunityElectorAddr;
     }
 
-    function quickVote(address candidateIdx) public {
+    function electorVotes(address candidateIdx) public {
     	registeredCandidate[candidateIdx].voteCount++;
     }
 }

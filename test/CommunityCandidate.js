@@ -21,30 +21,26 @@ const mineBlock = function  () {
 
 contract('CommunityCandidate', function (accounts) {
 
-  // it("should have owner set to the eth account deploying the contract", async function () {
-  //   const candidateReg = await CommunityCandidate.deployed();
-  //   const account0 = "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"; // given mnemonic and hd path
-  //   const owner = await candidateReg.owner.call();
+  let communityCandidate;
+  
+  beforeEach('setup contract for each test', async function () {
+    communityCandidate = await CommunityCandidate.deployed();
+  })
 
-  //   assert.equal(owner.valueOf(), account0, "Account0 does not seems to be the original account deploying CommunityCandidate contract.");
-  // });
-
-  it("shoud have a reference to CommunityElector contract", async function () {
-    const candidateReg = await CommunityCandidate.deployed();
-    const communityElectorAddr = await candidateReg.communityElectorAddr.call();
+  it("shoud have a reference to CommunityElector contract with communityElectorAddr", async function () {
+    const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
 
     assert.notEqual(communityElectorAddr.valueOf(), "0x0000000000000000000000000000000000000000", "communityElectorAddr should not have default address(0)");
   });
 
   it("should not assign communityElectorAddr if already initiate", async function () {
-    const candidateReg = await CommunityCandidate.deployed();
-    const communityElectorAddr = await candidateReg.communityElectorAddr.call();
+    const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
     const randomContractAdrr = "0xa5b9d60f32436310afebcfda832817a68921beaf";
 
     // tx could be fire from anyone but without ABI neither contract Addr,
     // it's safe to say we got time to be the first to init this var.
     try {
-      await candidateReg.setCommunityElectorAddr(randomContractAdrr);  
+      await communityCandidate.setCommunityElectorAddr(randomContractAdrr);  
     } catch (e) {
       return true;
     }
@@ -53,8 +49,7 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
+  	const endCommunityCandidateBlock = await communityCandidate.endCommunityCandidateBlock.call();
 
     /**
     * BlockHeight when CommunityCandidate constructor was called.
@@ -70,21 +65,19 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have no candidate", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	const candidatesCount = await candidateReg.getCandidatesCount.call();
+  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
 	  assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
   });
   
   it("should register a candidate", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
   	
   	const account0 = web3.eth.accounts[0];
   	
-  	await candidateReg.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
+  	await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
   	
   	const candidate = {};
-  	[candidate.pseudo, candidate.community, candidate.identity] = await candidateReg.getCandidate.call(account0);
+  	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
   	
   	assert.equal(web3.toUtf8(candidate.pseudo), "@aantonop", "candidate.pseudo is different than '@aantonop'");
   	assert.equal(candidate.community.valueOf(), "0", "candidate.community 0 is different than CommunityEnum.Bitcoin");
@@ -93,17 +86,15 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have one candidate", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	const candidatesCount = await candidateReg.getCandidatesCount.call();
+  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
-  it("should check CandidateRegistered event by register another candidate", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();  	
+  it("should check CandidateRegistered event by register another candidate", async function () { 	
   	const account1 = web3.eth.accounts[1];
   	
-  	candidateReg.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1}).then( result => {
+  	communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1}).then( result => {
   		const eventLog = result.logs[0];
   		const eventName = eventLog.event;
   		const eventArgs = eventLog.args;
@@ -116,19 +107,17 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have two candidates", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	const candidatesCount = await candidateReg.getCandidatesCount.call();
+  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
   });
 
   it("should deregistered a candidate given the eth account the request came from", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
 
   	// Sorry Vitalik
   	const candidateToDelIdentity = web3.eth.accounts[1];
 
-  	let candidatesIdx = await candidateReg.getCandidatesIdx();
+  	let candidatesIdx = await communityCandidate.getCandidatesIdx();
   	let candidateToDelIdx = -1;
 
   	Object.entries(candidatesIdx).forEach(([key, value]) => {
@@ -141,24 +130,22 @@ contract('CommunityCandidate', function (accounts) {
   		throw new Error("The candidate to delete should be the one inserted prev so we should find his identity within candidatesIdx!") 
   	}
 
-  	await candidateReg.deregisterCandidate({from: candidateToDelIdentity});
+  	await communityCandidate.deregisterCandidate({from: candidateToDelIdentity});
 
-	  candidatesIdx = await candidateReg.getCandidatesIdx();
+	  candidatesIdx = await communityCandidate.getCandidatesIdx();
 
   	assert.equal(candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", "Deregister candidateIdx should have default address(0)");
 
   });
 
   it("should have one candidate", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	const candidatesCount = await candidateReg.getCandidatesCount.call();
+  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
 	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
 
   it("should not register candidate as the candidate registration period expired", async function () {
-  	const candidateReg = await CommunityCandidate.deployed();
   	const account3 = web3.eth.accounts[3];
   	let blockNumber = web3.eth.blockNumber;
 
@@ -167,7 +154,7 @@ contract('CommunityCandidate', function (accounts) {
     * we modify the constant dayInBlock within the contract CommunityCandidate.sol DIRECTLY 
     * we do not rely on smartcontract endCommunityCandidateBlock which is approx 5760 blocks
     */
-  	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
+  	const endCommunityCandidateBlock = await communityCandidate.endCommunityCandidateBlock.call();
 
   	while (blockNumber <= endCommunityCandidateBlock) {
   		await mineBlock();
@@ -178,7 +165,7 @@ contract('CommunityCandidate', function (accounts) {
   	
   	// catch the revert() exeception and return true as the test succeed
   	try {
-  		await candidateReg.registerCandidate("@protocollabs", CommunityEnum.Filecoin, {from: account3});	
+  		await communityCandidate.registerCandidate("@protocollabs", CommunityEnum.Filecoin, {from: account3});	
   	} catch (e) {
       return true;
     }
@@ -192,3 +179,5 @@ contract('CommunityCandidate', function (accounts) {
 // https://medium.com/@kscarbrough1/writing-solidity-unit-tests-for-testing-assert-require-and-revert-conditions-using-truffle-2e182d91a40f
 // https://medium.com/coinmonks/testing-solidity-with-truffle-and-async-await-396e81c54f93
 // https://web3js.readthedocs.io/en/1.0/web3-utils.html
+// https://ethereum.stackexchange.com/questions/15567/truffle-smart-contract-testing-does-not-reset-state/15574#15574
+// https://medium.com/@gus_tavo_guim/testing-your-smart-contracts-with-javascript-40d4edc2abed
