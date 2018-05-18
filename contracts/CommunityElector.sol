@@ -25,3 +25,4 @@ contract CommunityElector {
 
 // https://medium.com/@blockchain101/calling-the-function-of-another-contract-in-solidity-f9edfa921f4c
 // https://vessenes.com/tx-origin-and-ethereum-oh-my/
+// https://stackoverflow.com/questions/46104721/solidity-set-value-to-state-variables-the-value-not-changed

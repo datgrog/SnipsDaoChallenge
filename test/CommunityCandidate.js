@@ -6,7 +6,7 @@ const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2,
 // HD PATH m/44'/60'/0'/0/account_index
 
 // helper 
-const mineBlock = function () {
+const mineBlock = function  () {
   return new Promise((resolve, reject) => {
     web3.currentProvider.sendAsync({
       jsonrpc: "2.0",
@@ -19,24 +19,40 @@ const mineBlock = function () {
   })
 }
 
-contract('CommunityCandidate', function(accounts) {
+contract('CommunityCandidate', function (accounts) {
 
-  it("should have owner set to the eth account deploying the contract", async function() {
-    const candidateReg = await CommunityCandidate.deployed();
-    const account0 = "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"; // given mnemonic and hd path
-    const owner = await candidateReg.owner.call();
+  // it("should have owner set to the eth account deploying the contract", async function () {
+  //   const candidateReg = await CommunityCandidate.deployed();
+  //   const account0 = "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"; // given mnemonic and hd path
+  //   const owner = await candidateReg.owner.call();
 
-    assert.equal(owner.valueOf(), account0, "Account0 does not seems to be the original account deploying CommunityCandidate contract.");
-  });
+  //   assert.equal(owner.valueOf(), account0, "Account0 does not seems to be the original account deploying CommunityCandidate contract.");
+  // });
 
-  it("shoud have a reference to CommunityElector contract", async function() {
+  it("shoud have a reference to CommunityElector contract", async function () {
     const candidateReg = await CommunityCandidate.deployed();
     const communityElectorAddr = await candidateReg.communityElectorAddr.call();
 
     assert.notEqual(communityElectorAddr.valueOf(), "0x0000000000000000000000000000000000000000", "communityElectorAddr should not have default address(0)");
   });
 
-  it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function() {
+  it("should not assign communityElectorAddr if already initiate", async function () {
+    const candidateReg = await CommunityCandidate.deployed();
+    const communityElectorAddr = await candidateReg.communityElectorAddr.call();
+    const randomContractAdrr = "0xa5b9d60f32436310afebcfda832817a68921beaf";
+
+    // tx could be fire from anyone but without ABI neither contract Addr,
+    // it's safe to say we got time to be the first to init this var.
+    try {
+      await candidateReg.setCommunityElectorAddr(randomContractAdrr);  
+    } catch (e) {
+      return true;
+    }
+    
+    throw new Error("I should never see this!")
+  });
+
+  it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
 
@@ -45,7 +61,7 @@ contract('CommunityCandidate', function(accounts) {
     * As Transactions happen before test execution, we need to sub it from the current blockHeight. 
     * Ganache default behaviour mines a block for each transaction to confirm them directly 
     */
-    const BlocksOrTxsBeforeTestExecution = 3;
+    const BlocksOrTxsBeforeTestExecution = 4;
   	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
 
   	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
@@ -53,14 +69,14 @@ contract('CommunityCandidate', function(accounts) {
 
   });
 
-  it("should have no candidate", async function() {
+  it("should have no candidate", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	  assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
   });
   
-  it("should register a candidate", async function() {
+  it("should register a candidate", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	
   	const account0 = web3.eth.accounts[0];
@@ -76,16 +92,15 @@ contract('CommunityCandidate', function(accounts) {
 
   });
 
-  it("should have one candidate", async function() {
+  it("should have one candidate", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
-  it("should check CandidateRegistered event by register another candidate", async function() {
-  	const candidateReg = await CommunityCandidate.deployed();
-  	
+  it("should check CandidateRegistered event by register another candidate", async function () {
+  	const candidateReg = await CommunityCandidate.deployed();  	
   	const account1 = web3.eth.accounts[1];
   	
   	candidateReg.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1}).then( result => {
@@ -100,14 +115,14 @@ contract('CommunityCandidate', function(accounts) {
   	});	
   });
 
-  it("should have two candidates", async function() {
+  it("should have two candidates", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
 	assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
   });
 
-  it("should deregistered a candidate given the eth account the request came from", async function() {
+  it("should deregistered a candidate given the eth account the request came from", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
 
   	// Sorry Vitalik
@@ -134,7 +149,7 @@ contract('CommunityCandidate', function(accounts) {
 
   });
 
-  it("should have one candidate", async function() {
+  it("should have one candidate", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const candidatesCount = await candidateReg.getCandidatesCount.call();
 
@@ -142,7 +157,7 @@ contract('CommunityCandidate', function(accounts) {
   });
 
 
-  it("should not register candidate as the candidate registration period expired", async function() {
+  it("should not register candidate as the candidate registration period expired", async function () {
   	const candidateReg = await CommunityCandidate.deployed();
   	const account3 = web3.eth.accounts[3];
   	let blockNumber = web3.eth.blockNumber;
@@ -154,12 +169,12 @@ contract('CommunityCandidate', function(accounts) {
     */
   	const endCommunityCandidateBlock = await candidateReg.endCommunityCandidateBlock.call();
 
-  	while(blockNumber <= endCommunityCandidateBlock) {
+  	while (blockNumber <= endCommunityCandidateBlock) {
   		await mineBlock();
   		blockNumber = web3.eth.blockNumber;
   	}
 
-	assert.isAbove(blockNumber, endCommunityCandidateBlock , "Current blockHeight is not strictly above endCommunityCandidateBlock which is mandatory to trigger revert()");
+	  assert.isAbove(blockNumber, endCommunityCandidateBlock , "Current blockHeight is not strictly above endCommunityCandidateBlock which is mandatory to trigger revert()");
   	
   	// catch the revert() exeception and return true as the test succeed
   	try {
@@ -176,3 +191,4 @@ contract('CommunityCandidate', function(accounts) {
 
 // https://medium.com/@kscarbrough1/writing-solidity-unit-tests-for-testing-assert-require-and-revert-conditions-using-truffle-2e182d91a40f
 // https://medium.com/coinmonks/testing-solidity-with-truffle-and-async-await-396e81c54f93
+// https://web3js.readthedocs.io/en/1.0/web3-utils.html

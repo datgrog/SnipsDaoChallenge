@@ -14,10 +14,6 @@ contract CommunityCandidate {
 	address[] public candidatesIdx;
 	mapping (address => CommunityLib.Candidate) public registeredCandidate;
 
-    // These will be assigned at the construction
-    // phase, where `msg.sender` is the account
-    // creating this contract.
-    address public owner = msg.sender;
 	address public communityElectorAddr;
 
 	modifier onlyDuringRegistrationPeriod {
@@ -36,11 +32,10 @@ contract CommunityCandidate {
 		_;
 	}
 
-    modifier onlyBy(address _account)
-    {
+    modifier onlyIfNotInit {
         require(
-            msg.sender == _account,
-            "Sender not authorized."
+            communityElectorAddr == address(0),
+            "communityElectorAddr has already been initiate."
         );
         _;
     }
@@ -116,7 +111,7 @@ contract CommunityCandidate {
         );
     }
 
-    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyBy(owner) {
+    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyIfNotInit() {
     	communityElectorAddr = newCommunityElectorAddr;
     }
 
@@ -129,4 +124,3 @@ contract CommunityCandidate {
 // https://ethereum.stackexchange.com/questions/13201/if-everyone-runs-the-same-transaction-why-does-only-the-miner-get-gas?rq=
 // https://ethereum.stackexchange.com/questions/31094/loop-optimisation-for-gas-usage
 // two modifiers http://solidity.readthedocs.io/en/v0.2.1/common-patterns.html
-// https://stackoverflow.com/questions/46104721/solidity-set-value-to-state-variables-the-value-not-changed
