@@ -5,20 +5,6 @@ const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2,
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away
 // HD PATH m/44'/60'/0'/0/account_index
 
-// helper 
-const mineBlock = function  () {
-  return new Promise((resolve, reject) => {
-    web3.currentProvider.sendAsync({
-      jsonrpc: "2.0",
-      method: "evm_mine",
-      params: []
-  }, (err, result) => {
-      if(err){ return reject(err) }
-      return resolve(result)
-    });
-  })
-}
-
 contract('CommunityCandidate', function (accounts) {
 
   let communityCandidate;
@@ -46,22 +32,6 @@ contract('CommunityCandidate', function (accounts) {
     }
     
     throw new Error("I should never see this!")
-  });
-
-  it("should have an endCommunityCandidateBlock deadline of one day in block equivalent", async function () {
-  	const endCommunityCandidateBlock = await communityCandidate.endCommunityCandidateBlock.call();
-
-    /**
-    * BlockHeight when CommunityCandidate constructor was called.
-    * As Transactions happen before test execution, we need to sub it from the current blockHeight. 
-    * Ganache default behaviour mines a block for each transaction to confirm them directly 
-    */
-    const BlocksOrTxsBeforeTestExecution = 4;
-  	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
-
-  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
-  	assert.equal(endCommunityCandidateBlock.valueOf(), blockNumber + 10, "seems like a day equivalent wasn't found in endCommunityCandidateBlock");
-
   });
 
   it("should have no candidate", async function () {
@@ -100,8 +70,6 @@ contract('CommunityCandidate', function (accounts) {
   		const eventArgs = eventLog.args;
   		
   		assert.equal(eventName, "CandidateRegistered", "Event name is not equals to 'CandidateRegistered'");
-	  	assert.equal(web3.toUtf8(eventArgs.pseudo), "@VitalikButerin", "candidate.pseudo is different than '@VitalikButerin'");
-	  	assert.equal(eventArgs.community.valueOf(), "1", "eventArgs.community 1 is different than CommunityEnum.Ethereum");
 	  	assert.equal(eventArgs.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", "eventArgs.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac");
   	});	
   });
@@ -109,7 +77,7 @@ contract('CommunityCandidate', function (accounts) {
   it("should have two candidates", async function () {
   	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
+	  assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
   });
 
   it("should deregistered a candidate given the eth account the request came from", async function () {
@@ -144,37 +112,7 @@ contract('CommunityCandidate', function (accounts) {
 	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
-
-  it("should not register candidate as the candidate registration period expired", async function () {
-  	const account3 = web3.eth.accounts[3];
-  	let blockNumber = web3.eth.blockNumber;
-
-  	/**
-    * As it takes a while to go mine a test block,
-    * we modify the constant dayInBlock within the contract CommunityCandidate.sol DIRECTLY 
-    * we do not rely on smartcontract endCommunityCandidateBlock which is approx 5760 blocks
-    */
-  	const endCommunityCandidateBlock = await communityCandidate.endCommunityCandidateBlock.call();
-
-  	while (blockNumber <= endCommunityCandidateBlock) {
-  		await mineBlock();
-  		blockNumber = web3.eth.blockNumber;
-  	}
-
-	  assert.isAbove(blockNumber, endCommunityCandidateBlock , "Current blockHeight is not strictly above endCommunityCandidateBlock which is mandatory to trigger revert()");
-  	
-  	// catch the revert() exeception and return true as the test succeed
-  	try {
-  		await communityCandidate.registerCandidate("@protocollabs", CommunityEnum.Filecoin, {from: account3});	
-  	} catch (e) {
-      return true;
-    }
-    
-    throw new Error("I should never see this!")
-  });
-
 });
-
 
 // https://medium.com/@kscarbrough1/writing-solidity-unit-tests-for-testing-assert-require-and-revert-conditions-using-truffle-2e182d91a40f
 // https://medium.com/coinmonks/testing-solidity-with-truffle-and-async-await-396e81c54f93

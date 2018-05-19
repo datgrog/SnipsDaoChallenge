@@ -1,15 +1,8 @@
-// const SnipsDaoChallenge = artifacts.require("./SnipsDaoChallenge.sol")
-
-// module.exports = function(deployer) {
-// 	deployer.deploy(SnipsDaoChallenge);
-// };
 const CommunityCandidate = artifacts.require("./CommunityCandidate.sol");
 const CommunityElector = artifacts.require("./CommunityElector.sol");
 const owner = web3.eth.accounts[0];
 
 module.exports = function(deployer) {
-	// deployer.deploy(CommunityCandidate);
-
 	/**
 	* Deploy CommunityCandidate, then deploy CommunityElector,
 	* passing in CommunityCandidate's newly deployed address 
@@ -28,5 +21,3 @@ module.exports = function(deployer) {
 		return CommunityCandidateInstance.setCommunityElectorAddr(CommunityElector.address, {from: owner});
 	});
 };
-
-CommunityCandidate.deployed().then(inst => { CommunityCandidateInstance = inst });

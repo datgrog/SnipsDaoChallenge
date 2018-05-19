@@ -2,27 +2,13 @@ pragma solidity ^0.4.23;
 import "./CommunityLib.sol";
 
 contract CommunityCandidate {
+
 	address constant candidateDeleted = address(0);
-	uint constant dayInBlock = 10;
-	// uint constant dayInBlock = 5760;
-
-	// uint constant weekInBlock = 7 * 5760;
-
-	uint public endCommunityCandidateBlock;
-	// uint public endVotingBlock;
-
+	
 	address[] public candidatesIdx;
 	mapping (address => CommunityLib.Candidate) public registeredCandidate;
 
 	address public communityElectorAddr;
-
-	modifier onlyDuringRegistrationPeriod {
-		require(
-			block.number <= endCommunityCandidateBlock,
-			"Registration Period has expired."
-		);
-		_;
-	}
 
 	modifier onlyOneRegistration {
 		require(
@@ -40,22 +26,25 @@ contract CommunityCandidate {
         _;
     }
 
+    modifier onlyCommunityElector {
+        require(
+            communityElectorAddr == msg.sender,
+            "msg.sender is not communityElectorAddr."
+        );
+        _;
+    }
+
     /**
     * The logs that will be emitted in every step of the contract's life cycle.
     */
-	event CandidateRegistered(bytes32 pseudo, CommunityLib.CommunityChoices community, address identity);
+	event CandidateRegistered(address identity);
 	event CandidateDeregistered(address identity);
 
-	constructor() public {
-		/**
-		* As Eth mainet generate new block each 15 sec in avg, 
-		* we defined a day 5760 blocks. 
-		*/
-		endCommunityCandidateBlock = block.number + dayInBlock;
-		// endVotingBlock = block.number + (2 * dayInBlock);
-	}
+    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyIfNotInit() {
+    	communityElectorAddr = newCommunityElectorAddr;
+    }
 
-	function registerCandidate(bytes32 pseudo, CommunityLib.CommunityChoices community) public onlyDuringRegistrationPeriod onlyOneRegistration {
+	function registerCandidate(bytes32 pseudo, CommunityLib.CommunityChoices community) public onlyOneRegistration {
 		CommunityLib.Candidate memory candidate = CommunityLib.Candidate(pseudo, community, msg.sender, 0);
 
 		/**
@@ -66,7 +55,7 @@ contract CommunityCandidate {
 		registeredCandidate[msg.sender] = candidate;
  		candidatesIdx.push(msg.sender);
 
-        emit CandidateRegistered(candidate.pseudo, candidate.community, candidate.identity);
+        emit CandidateRegistered(candidate.identity);
 	}
 
 	function deregisterCandidate() public {
@@ -111,11 +100,7 @@ contract CommunityCandidate {
         );
     }
 
-    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyIfNotInit() {
-    	communityElectorAddr = newCommunityElectorAddr;
-    }
-
-    function electorVotes(address candidateIdx) public {
+    function electorVotes(address candidateIdx) public onlyCommunityElector {
     	registeredCandidate[candidateIdx].voteCount++;
     }
 }
