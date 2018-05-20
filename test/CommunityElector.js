@@ -8,6 +8,9 @@ const dayInBlock = 10;
 
 contract('CommunityElector', function (accounts) {
 
+  const account0 = accounts[0];
+  const account1 = accounts[1];
+
   let communityCandidate;
   let communityElector;
   
@@ -59,7 +62,6 @@ contract('CommunityElector', function (accounts) {
   	* To test contract interactions we should redeploy them,
   	* even if we could find a workaround to access CommunityCandidate previously tested.
   	*/
-	  const account0 = web3.eth.accounts[0];
 
 	  await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
   	
@@ -72,7 +74,6 @@ contract('CommunityElector', function (accounts) {
   });
 
   it("should write CommunityCandidate contract by adding one candidate", async function() {
-  	const account1 = web3.eth.accounts[1];
 
   	await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1})
 	  const candidatesCount = await communityElector.getCandidatesCount.call();
@@ -83,8 +84,6 @@ contract('CommunityElector', function (accounts) {
   it("should reject vote while startVotingBlock has not been reached", async function() {
     const startVotingBlock = await communityElector.startVotingBlock.call();
     const blockNumber = web3.eth.blockNumber;
-  	const account0 = web3.eth.accounts[0];
-    const account1 = web3.eth.accounts[1];
 
     assert.isBelow(
       blockNumber, startVotingBlock, 
@@ -98,14 +97,12 @@ contract('CommunityElector', function (accounts) {
       return true;
 	  }
     
-    throw new Error("I should never see this!")
+    throw new Error("I should never see this!");
   });
 
  it("should check ElectionState event TRUE by having the FIRST vote after startVotingBlock has been reach", async function() {
     const startVotingBlock = await communityElector.startVotingBlock.call();
     let blockNumber = web3.eth.blockNumber;
-    const account0 = web3.eth.accounts[0];
-    const account1 = web3.eth.accounts[1];
     
     /**
       * As it takes a while to go mine a test block,
@@ -132,14 +129,13 @@ contract('CommunityElector', function (accounts) {
     );
 
     // The account1 votes and it's the first one so we catch the event
-    communityElector.electorVotes(account0, {from: account1}).then( result => {
-      const eventLog = result.logs[0];
-      const eventName = eventLog.event;
-      const eventArgs = eventLog.args;
-      
-      assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-      assert.isTrue(eventArgs.state.valueOf(), "In the context where Voting period open the state says closed.");
-    });
+    const voteTx = await communityElector.electorVotes(account0, {from: account1});
+    const eventLog = voteTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
+
+    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
+    assert.isTrue(eventArgs.state, "In the context where Voting period open the state says closed.");
 
     // after the first vote the the state should be true aka open
     isElectionOpen = await communityElector.isElectionOpen.call();
@@ -156,15 +152,13 @@ contract('CommunityElector', function (accounts) {
  });
 
   it("should not allow an user to vote multiple times a specific community candidate.", async function() {
-  	const account0 = web3.eth.accounts[0];
-  	const account1 = web3.eth.accounts[1];
 
   	try {
   		await communityElector.electorVotes(account0, {from: account1});
   	} catch (e) {
   		return true;
   	}
-  	throw new Error("I should never see this!")
+  	throw new Error("I should never see this!");
   });
 
   it("should allow an user to vote to different community candidate.", async function() {
@@ -173,7 +167,7 @@ contract('CommunityElector', function (accounts) {
   	// In this case vitalik vote for himself after voting for aantonop
  	  await communityElector.electorVotes(vitalik, {from: vitalik});
 
- 	  vitalikInfo = await communityElector.getCandidate.call(vitalik);
+ 	  const vitalikInfo = await communityElector.getCandidate.call(vitalik);
  	  vitalikVoteCount = vitalikInfo[3].toNumber();
  	  
     assert.equal(vitalikVoteCount, 1, "vitalik should have only his own vote.");
@@ -182,8 +176,6 @@ contract('CommunityElector', function (accounts) {
   it("should check ElectionState event FALSE by having the LAST vote after or equals endVotingBlock has been reach", async function() {
     const endVotingBlock = await communityElector.endVotingBlock.call();
     let blockNumber = web3.eth.blockNumber;
-    const account0 = web3.eth.accounts[0];
-    const account1 = web3.eth.accounts[1];
 
     // - 1 because the voting tx will when mined be it will match exactly endVotingBlock value
     // and the (block.number >= endVotingBlock && isElectionOpen) condition
@@ -192,11 +184,35 @@ contract('CommunityElector', function (accounts) {
       blockNumber = web3.eth.blockNumber;
     }
 
-    console.log(blockNumber);
-    console.log(endVotingBlock);
+    // The account0 votes and it's the first one so we catch the event
+    const voteTx = await communityElector.electorVotes(account1, {from: account0});
+    const eventLog = voteTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
 
-    const onche = await communityElector.electorVotes(account1, {from: account0});
-    console.log(onche);
+    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
+    assert.isFalse(eventArgs.state, "In the context where Voting period open the state says closed.");
+
+    const vitalikInfo = await communityElector.getCandidate.call(account1);
+    const vitalikVoteCount = vitalikInfo[3].toNumber();
+
+    assert.equal(vitalikVoteCount, 2, "vitalik should have 2 vote.");
+  });
+
+  it("should fail to vote as the startVotingBlock has been updated previously", async function() {
+    const blockNumber = web3.eth.blockNumber;
+    const startVotingBlock = await communityElector.startVotingBlock.call();
+
+
+    assert.isBelow(blockNumber, startVotingBlock, "blockNumber should not be equal or above startVotingBlock");
+    
+    try {
+      await communityElector.electorVotes(account1, {from: account0});  
+    } catch (e) {
+      return true;
+    }
+    
+    throw new Error("I should never see this!");
   });
 
 });

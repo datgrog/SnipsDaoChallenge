@@ -7,6 +7,9 @@ const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2,
 
 contract('CommunityCandidate', function (accounts) {
 
+  const account0 = accounts[0];
+  const account1 = accounts[1];
+
   let communityCandidate;
   
   beforeEach('setup contract for each test', async function () {
@@ -16,7 +19,10 @@ contract('CommunityCandidate', function (accounts) {
   it("shoud have a reference to CommunityElector contract with communityElectorAddr", async function () {
     const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
 
-    assert.notEqual(communityElectorAddr.valueOf(), "0x0000000000000000000000000000000000000000", "communityElectorAddr should not have default address(0)");
+    assert.notEqual(
+      communityElectorAddr.valueOf(), "0x0000000000000000000000000000000000000000", 
+      "communityElectorAddr should not have default address(0)"
+    );
   });
 
   it("should not assign communityElectorAddr if already initiate", async function () {
@@ -37,52 +43,64 @@ contract('CommunityCandidate', function (accounts) {
   it("should have no candidate", async function () {
   	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(candidatesCount.valueOf(), 0, "candidatesCount is different than 0");
+	  assert.equal(
+      candidatesCount.valueOf(), 0, 
+      "candidatesCount is different than 0"
+    );
   });
   
   it("should register a candidate", async function () {
-  	
-  	const account0 = web3.eth.accounts[0];
-  	
   	await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
   	
   	const candidate = {};
   	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
   	
-  	assert.equal(web3.toUtf8(candidate.pseudo), "@aantonop", "candidate.pseudo is different than '@aantonop'");
-  	assert.equal(candidate.community.valueOf(), "0", "candidate.community 0 is different than CommunityEnum.Bitcoin");
-  	assert.equal(candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1");
-
+  	assert.equal(
+      web3.toUtf8(candidate.pseudo), "@aantonop", 
+      "candidate.pseudo is different than '@aantonop'"
+    );
+  	assert.equal(
+      candidate.community.valueOf(), "0", 
+      "candidate.community 0 is different than CommunityEnum.Bitcoin"
+    );
+  	assert.equal(
+      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
+      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+    );
   });
 
   it("should have one candidate", async function () {
   	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
+	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
-  it("should check CandidateRegistered event by register another candidate", async function () { 	
-  	const account1 = web3.eth.accounts[1];
-  	
-  	communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1}).then( result => {
-  		const eventLog = result.logs[0];
-  		const eventName = eventLog.event;
-  		const eventArgs = eventLog.args;
-  		
-  		assert.equal(eventName, "CandidateRegistered", "Event name is not equals to 'CandidateRegistered'");
-	  	assert.equal(eventArgs.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", "eventArgs.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac");
-  	});	
+  it("should check CandidateRegistered event by register another candidate", async function () {
+  	const registerCandidateTx = await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1});
+    const eventLog = registerCandidateTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
+      
+    assert.equal(
+      eventName, "CandidateRegistered", 
+      "Event name is not equals to 'CandidateRegistered'"
+    );
+    assert.equal(
+      eventArgs.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", 
+      "eventArgs.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac"
+    );
   });
 
   it("should have two candidates", async function () {
   	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
+	  assert.equal(
+      candidatesCount.valueOf(), 2, 
+      "candidatesCount is different than 2"
+    );
   });
 
   it("should deregistered a candidate given the eth account the request came from", async function () {
-
-  	// Sorry Vitalik
   	const candidateToDelIdentity = web3.eth.accounts[1];
 
   	let candidatesIdx = await communityCandidate.getCandidatesIdx();
@@ -102,14 +120,19 @@ contract('CommunityCandidate', function (accounts) {
 
 	  candidatesIdx = await communityCandidate.getCandidatesIdx();
 
-  	assert.equal(candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", "Deregister candidateIdx should have default address(0)");
-
+  	assert.equal(
+      candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", 
+      "Deregister candidateIdx should have default address(0)"
+    );
   });
 
   it("should have one candidate", async function () {
   	const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
+	  assert.equal(
+      candidatesCount.valueOf(), 1, 
+      "candidatesCount is different than 1"
+    );
   });
 
 });
