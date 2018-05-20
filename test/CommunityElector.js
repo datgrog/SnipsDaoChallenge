@@ -16,28 +16,42 @@ contract('CommunityElector', function (accounts) {
     communityElector = await CommunityElector.deployed(communityCandidate.address);
   })
 
-  it("should have startVotingBlock set to a day after CommunityElector has been mined.", async function () {
-	const electionState = {};
-	[electionState.id, electionState.isOpen, electionState.startVotingBlock, electionState.endVotingBlock] = await communityElector.electionState.call();
+  it("should have isElectionOpen false at the beggining", async function() {
+    const isElectionOpen = await communityElector.isElectionOpen.call();
 
-	/**
-	* blockHeight when CommunityElector constructor was called.
-	* As Transactions happen before test execution, we need to sub it from the current blockHeight. 
-	* Ganache default behaviour mines a block for each transaction to confirm them directly 
-	*/
-		
-	const BlocksOrTxsBeforeTestExecution = 2;
-	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
-		
-	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
-	assert.equal(electionState.startVotingBlock.toNumber(), blockNumber + dayInBlock, "seems like a day equivalent wasn't found in startVotingBlock");
+    assert.isFalse(
+      isElectionOpen,
+      "seems isElectionOpen is true but should be false."
+    );
+  })
+
+  it("should have startVotingBlock set to a day after CommunityElector has been mined.", async function () {
+    const startVotingBlock = await communityElector.startVotingBlock.call();
+
+  	/**
+  	* blockHeight when CommunityElector constructor was called.
+  	* As Transactions happen before test execution, we need to sub it from the current blockHeight. 
+  	* Ganache default behaviour mines a block for each transaction to confirm them directly 
+  	*/
+  		
+  	const BlocksOrTxsBeforeTestExecution = 2;
+  	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
+  		
+  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
+  	assert.equal(
+      startVotingBlock.toNumber(), blockNumber + dayInBlock, 
+      "seems like a day equivalent wasn't found in startVotingBlock"
+    );
   });
 
   it("should have endVotingBlock equals to a day after startVotingBlock.", async function () {
-	const electionState = {};
-	[electionState.id, electionState.isOpen, electionState.startVotingBlock, electionState.endVotingBlock] = await communityElector.electionState.call();
-
-	assert.equal(electionState.endVotingBlock.toNumber(), electionState.startVotingBlock.toNumber() + dayInBlock, "endVotingBlock not equal to a day after startVotingBlock");
+    const startVotingBlock = await communityElector.startVotingBlock.call();
+    const endVotingBlock = await communityElector.endVotingBlock.call();
+	  
+	  assert.equal(
+      endVotingBlock.toNumber(), startVotingBlock.toNumber() + dayInBlock, 
+      "endVotingBlock not equal to a day after startVotingBlock"
+    );
   });
 
   it("shoud read CommunityCandidate contract", async function () {
@@ -45,9 +59,9 @@ contract('CommunityElector', function (accounts) {
   	* To test contract interactions we should redeploy them,
   	* even if we could find a workaround to access CommunityCandidate previously tested.
   	*/
-	const account0 = web3.eth.accounts[0];
+	  const account0 = web3.eth.accounts[0];
 
-	await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
+	  await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
   	
   	const candidate = {};
   	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
@@ -61,58 +75,84 @@ contract('CommunityElector', function (accounts) {
   	const account1 = web3.eth.accounts[1];
 
   	await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1})
-	const candidatesCount = await communityElector.getCandidatesCount.call();
+	  const candidatesCount = await communityElector.getCandidatesCount.call();
 
-	assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
+	  assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
   });
 
   it("should reject vote while startVotingBlock has not been reached", async function() {
-  	const blockNumber = web3.eth.blockNumber;
+    const startVotingBlock = await communityElector.startVotingBlock.call();
+    const blockNumber = web3.eth.blockNumber;
   	const account0 = web3.eth.accounts[0];
-	const account1 = web3.eth.accounts[1];
+    const account1 = web3.eth.accounts[1];
 
-	const electionState = {};
-	[electionState.id, electionState.isOpen, electionState.startVotingBlock, electionState.endVotingBlock] = await communityElector.electionState.call();
-
-	assert.isBelow(blockNumber, electionState.startVotingBlock , "Current blockHeight is not strictly below startVotingBlock which is mandatory to trigger revert()");
-	// catch the revert() exeception and return true as the test succeed
-	try {
-		await communityElector.electorVotes(account0, {from: account1});
-	} catch (e) {
-		return true;
-	}
-	throw new Error("I should never see this!")
+    assert.isBelow(
+      blockNumber, startVotingBlock, 
+      "Current blockHeight is not strictly below startVotingBlock which is mandatory to trigger revert()"
+    );
+	  
+    // catch the revert() exeception and return true as the test succeed
+	  try {
+		  await communityElector.electorVotes(account0, {from: account1});
+	  } catch (e) {
+      return true;
+	  }
+    
+    throw new Error("I should never see this!")
   });
 
- it("should vote by calling electorVotes within CommunityCandidate contract", async function () {
- 	let blockNumber = web3.eth.blockNumber;
-  	const account0 = web3.eth.accounts[0];
-	const account1 = web3.eth.accounts[1];
+ it("should check ElectionState event TRUE by having the FIRST vote after startVotingBlock has been reach", async function() {
+    const startVotingBlock = await communityElector.startVotingBlock.call();
+    let blockNumber = web3.eth.blockNumber;
+    const account0 = web3.eth.accounts[0];
+    const account1 = web3.eth.accounts[1];
+    
+    /**
+      * As it takes a while to go mine a test block,
+      * we modify the constant dayInBlock within the contract CommunityElector.sol DIRECTLY 
+      * we do not rely on smartcontract endCommunityCandidateBlock which is approx 5760 blocks
+      */
+    while (blockNumber < startVotingBlock) {
+      await helper.mineBlock();
+      blockNumber = web3.eth.blockNumber;
+    }
 
-	const electionState = {};
-	[electionState.id, electionState.isOpen, electionState.startVotingBlock, electionState.endVotingBlock] = await communityElector.electionState.call();
+    let candidate0Info = await communityElector.getCandidate.call(account0);
+    let candidate0VoteCount = candidate0Info[3].toNumber();    
+    assert.equal(
+      candidate0VoteCount, 0, 
+      "candidate0 should not have any vote yet"
+    );
 
- 	/**
-    * As it takes a while to go mine a test block,
-    * we modify the constant dayInBlock within the contract CommunityElector.sol DIRECTLY 
-    * we do not rely on smartcontract endCommunityCandidateBlock which is approx 5760 blocks
-    */
- 	while (blockNumber < electionState.startVotingBlock) {
- 		await helper.mineBlock();
- 		blockNumber = web3.eth.blockNumber;
- 	}
+    // before the first vote the the state should be false aka close
+    let isElectionOpen = await communityElector.isElectionOpen.call();
+    assert.isFalse(
+      isElectionOpen, 
+      "seems isElectionOpen is true but should be false as voting hasn't yet started."
+    );
 
- 	let candidate0Info = await communityElector.getCandidate.call(account0);
- 	let candidate0VoteCount = candidate0Info[3].toNumber();
- 	
- 	assert.equal(candidate0VoteCount, 0, "candidate0 should not have any vote yet");
+    // The account1 votes and it's the first one so we catch the event
+    communityElector.electorVotes(account0, {from: account1}).then( result => {
+      const eventLog = result.logs[0];
+      const eventName = eventLog.event;
+      const eventArgs = eventLog.args;
+      
+      assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
+      assert.isTrue(eventArgs.state.valueOf(), "In the context where Voting period open the state says closed.");
+    });
 
-	// account1HasVoted
- 	await communityElector.electorVotes(account0, {from: account1});
+    // after the first vote the the state should be true aka open
+    isElectionOpen = await communityElector.isElectionOpen.call();
+    assert.isTrue(
+      isElectionOpen, true, 
+      "seems isElectionOpen is true but should be false as voting hasn't yet started."
+    );
 
- 	candidate0Info = await communityElector.getCandidate.call(account0);
- 	candidate0VoteCount = candidate0Info[3].toNumber();
- 	assert.equal(candidate0VoteCount, 1, "candidate0 should have only one vote ");
+    // as we vote once the candidate should only have one vote
+    candidate0Info = await communityElector.getCandidate.call(account0);
+    candidate0VoteCount = candidate0Info[3].toNumber();
+    assert.equal(candidate0VoteCount, 1, "candidate0 should have only one vote ");
+
  });
 
   it("should not allow an user to vote multiple times a specific community candidate.", async function() {
@@ -131,11 +171,32 @@ contract('CommunityElector', function (accounts) {
   	const vitalik = web3.eth.accounts[1];
 
   	// In this case vitalik vote for himself after voting for aantonop
- 	await communityElector.electorVotes(vitalik, {from: vitalik});
+ 	  await communityElector.electorVotes(vitalik, {from: vitalik});
 
- 	vitalikInfo = await communityElector.getCandidate.call(vitalik);
- 	vitalikVoteCount = vitalikInfo[3].toNumber();
- 	assert.equal(vitalikVoteCount, 1, "vitalik should have only his own vote.");
+ 	  vitalikInfo = await communityElector.getCandidate.call(vitalik);
+ 	  vitalikVoteCount = vitalikInfo[3].toNumber();
+ 	  
+    assert.equal(vitalikVoteCount, 1, "vitalik should have only his own vote.");
+  });
+
+  it("should check ElectionState event FALSE by having the LAST vote after or equals endVotingBlock has been reach", async function() {
+    const endVotingBlock = await communityElector.endVotingBlock.call();
+    let blockNumber = web3.eth.blockNumber;
+    const account0 = web3.eth.accounts[0];
+    const account1 = web3.eth.accounts[1];
+
+    // - 1 because the voting tx will when mined be it will match exactly endVotingBlock value
+    // and the (block.number >= endVotingBlock && isElectionOpen) condition
+    while (blockNumber < endVotingBlock - 1) {
+      await helper.mineBlock();
+      blockNumber = web3.eth.blockNumber;
+    }
+
+    console.log(blockNumber);
+    console.log(endVotingBlock);
+
+    const onche = await communityElector.electorVotes(account1, {from: account0});
+    console.log(onche);
   });
 
 });

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 library CommunityLib {
-	enum CommunityChoices { Bitcoin, Ethereum, Filecoin, Monero }
+    enum CommunityChoices { Bitcoin, Ethereum, Filecoin, Monero }
 
     struct Candidate {
         bytes32 pseudo;
@@ -10,12 +10,6 @@ library CommunityLib {
         uint voteCount;
     }
 
-    struct Election {
-    	uint id;
-    	bool isOpen;
-        uint startVotingBlock;
-        uint endVotingBlock;
-    }
 }
 
 // http://solidity.readthedocs.io/en/v0.4.23/types.html?highlight=view#enums

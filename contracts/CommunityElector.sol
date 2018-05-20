@@ -11,7 +11,7 @@ contract CommunityElector {
 	/**
 	* As Eth mainet generate new block each 15 sec in avg, 
 	* we defined a day 5760 blocks. 
-	* We use 10 in dev env
+	* We use 10 in dev env.
 	*/
 	uint constant dayInBlock = 10;
 	// uint constant dayInBlock = 5760;
@@ -21,34 +21,52 @@ contract CommunityElector {
 	mapping (address => bool[4]) public electorsCommunityVote;
 
 	// Election state
-	CommunityLib.Election public electionState;
+	bool public isElectionOpen;
+    uint public startVotingBlock;
+    uint public endVotingBlock;
 
 	modifier onlyAfterStartVotingBlock {
 		require(
-			block.number >= electionState.startVotingBlock,
-			"Voting is still ongoing or already close."
+			block.number >= startVotingBlock,
+			"Election has not yet beein opened."
 		);
 		_;
 	}
+
+	modifier updateElectionState {
+		// The first vote during the voting period update isElectionOpen.
+		if (block.number < endVotingBlock && !isElectionOpen) {
+			isElectionOpen = true;
+
+			emit ElectionState(true);
+		}
+
+		// The last vote during the voting period update isElectionOpen.
+		if (block.number >= endVotingBlock && isElectionOpen) {
+			startVotingBlock = block.number + (6 * dayInBlock);
+			endVotingBlock = startVotingBlock + dayInBlock;
+
+			emit ElectionState(false);
+		}
+		_;
+	}
+    
+    /**
+    * The logs that will be emitted in every step of the contract's life cycle.
+    */
+	event ElectionState(bool state);
 
 	constructor(address _cr) public {
 		cr = CommunityRepresentative(_cr);
 
 		// Initiate election state, first election occures next day.
-		uint startVotingBlock = block.number + dayInBlock;
-		uint endVotingBlock = startVotingBlock + dayInBlock;
-		electionState = CommunityLib.Election(0, false, startVotingBlock, endVotingBlock);
+		isElectionOpen = false;
+		startVotingBlock = block.number + dayInBlock;
+		endVotingBlock = startVotingBlock + dayInBlock;
 	}
 
-	function electorVotes(address candidateIdx) public onlyAfterStartVotingBlock {
-		// the first vote during the voting period update electionState
-		if ((block.number <= electionState.endVotingBlock) && (!electionState.isOpen)) {
-			electionState.isOpen = true;
-			electionState.id++;
-			// emit event VotingPeriod id, true
-		}
-
-		// Fetch community related to candidateIdx
+	function electorVotes(address candidateIdx) public onlyAfterStartVotingBlock updateElectionState {
+		// Fetch community info related to candidateIdx
 	 	bytes32 pseudo; 
 	 	CommunityLib.CommunityChoices community; 
 	 	address identity; 
@@ -57,22 +75,16 @@ contract CommunityElector {
 		(pseudo, community, identity, voteCount) = this.getCandidate(candidateIdx);
          
 		// Compare it against electorsCommunityVote to see
-		// if current elector has already vote for a this specific community
+		// if current elector has already vote for a this specific community.
 		require(
 			false == electorsCommunityVote[msg.sender][uint(community)],
 			"Current elector has already vote for a given community."
 		);
+
+		// Update that current msg.sender has voted given a specific community
+		// and fire the vote.
 		electorsCommunityVote[msg.sender][uint(community)] = true;
 		cr.electorVotes(candidateIdx);
-
-		// the last vote during the voting period update electionState
-		if ((block.number >= electionState.endVotingBlock) && (electionState.isOpen)) {
-			// emit event VotingPeriod id, false
-			electionState.isOpen = false;
-			electionState.id++;
-			electionState.startVotingBlock = block.number + (6 * dayInBlock);
-			electionState.endVotingBlock = electionState.startVotingBlock + dayInBlock;
-		}
 	}
 
 	function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
