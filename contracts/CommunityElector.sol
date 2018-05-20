@@ -1,7 +1,8 @@
 pragma solidity ^0.4.23;
 import "./CommunityLib.sol";
 
-contract CommunityRepresentative {
+// CommunityCandidate interface / ABI
+contract CommunityCandidateInterface {
     function electorVotes(address) public { }
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
     function getCandidatesCount() public pure returns(uint) { }
@@ -16,7 +17,7 @@ contract CommunityElector {
 	uint constant dayInBlock = 10;
 	// uint constant dayInBlock = 5760;
 
-	CommunityRepresentative cr;
+	CommunityCandidateInterface communityCandidate;
 
 	mapping (address => bool[4]) public electorsCommunityVote;
 
@@ -57,7 +58,7 @@ contract CommunityElector {
 	event ElectionState(bool state);
 
 	constructor(address _cr) public {
-		cr = CommunityRepresentative(_cr);
+		communityCandidate = CommunityCandidateInterface(_cr);
 
 		// Initiate election state, first election occures next day.
 		isElectionOpen = false;
@@ -84,15 +85,17 @@ contract CommunityElector {
 		// Update that current msg.sender has voted given a specific community
 		// and fire the vote.
 		electorsCommunityVote[msg.sender][uint(community)] = true;
-		cr.electorVotes(candidateIdx);
+		communityCandidate.electorVotes(candidateIdx);
+
+		// if isElectionOpen is false then we could trigger CommunityRepresentative
 	}
 
 	function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
-		return cr.getCandidate(candidateIdx);
+		return communityCandidate.getCandidate(candidateIdx);
 	}
 
     function getCandidatesCount() public view returns (uint) {
-        return cr.getCandidatesCount();
+        return communityCandidate.getCandidatesCount();
     }
 }
 

@@ -7,17 +7,13 @@ module.exports = function(deployer) {
 	* Deploy CommunityCandidate, then deploy CommunityElector,
 	* passing in CommunityCandidate's newly deployed address 
 	*/
-	let CommunityCandidateInstance;
-	let CommunityElectorInstance;
+	deployer.then(async function() {
+		const CommunityCandidateInstance = await deployer.deploy(CommunityCandidate);
+		const CommunityElectorInstance = await deployer.deploy(CommunityElector, CommunityCandidate.address);
 
-	deployer.deploy(CommunityCandidate).then(function(instance) {
-		CommunityCandidateInstance = instance;
-	  	
-	  	return deployer.deploy(CommunityElector, CommunityCandidate.address);
-	}).then(function(instance) {
-		CommunityElectorInstance = instance;
-
-		// owner logic might not be necessary though
-		return CommunityCandidateInstance.setCommunityElectorAddr(CommunityElector.address, {from: owner});
+		await CommunityCandidateInstance.setCommunityElectorAddr(CommunityElector.address, {from: owner});
 	});
 };
+
+// await async migrations file
+// https://github.com/trufflesuite/truffle/issues/501
