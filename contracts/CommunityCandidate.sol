@@ -40,8 +40,8 @@ contract CommunityCandidate {
 	event CandidateRegistered(address identity);
 	event CandidateDeregistered(address identity);
 
-    function setCommunityElectorAddr(address newCommunityElectorAddr) public onlyIfNotInit() {
-    	communityElectorAddr = newCommunityElectorAddr;
+    function setCommunityElectorAddr(address _ce) public onlyIfNotInit() {
+    	communityElectorAddr = _ce;
     }
 
 	function registerCandidate(bytes32 pseudo, CommunityLib.CommunityChoices community) public onlyOneRegistration {

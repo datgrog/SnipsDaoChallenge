@@ -3,21 +3,27 @@ import "./CommunityLib.sol";
 
 // CommunityCandidate interface / ABI
 contract CommunityCandidateInterface {
-    function electorVotes(address) public { }
+    function electorVotes(address) public {}
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
-    function getCandidatesCount() public pure returns(uint) { }
+    function getCandidatesCount() public pure returns(uint) {}
+}
+
+// CommunityRepresentative interface / ABI
+contract CommunityRepresentativeInterface {
+	function electAllRepresentative() public {}
 }
 
 contract CommunityElector {
 	/**
 	* As Eth mainet generate new block each 15 sec in avg, 
 	* we defined a day 5760 blocks. 
-	* We use 10 in dev env.
+	* We use 30 in dev env.
 	*/
-	uint constant dayInBlock = 10;
+	uint constant dayInBlock = 30;
 	// uint constant dayInBlock = 5760;
 
 	CommunityCandidateInterface communityCandidate;
+	CommunityRepresentativeInterface communityRepresentative;
 
 	mapping (address => bool[4]) public electorsCommunityVote;
 
@@ -57,8 +63,9 @@ contract CommunityElector {
     */
 	event ElectionState(bool state);
 
-	constructor(address _cr) public {
-		communityCandidate = CommunityCandidateInterface(_cr);
+	constructor(address _cc, address _cr) public {
+		communityCandidate = CommunityCandidateInterface(_cc);
+		communityRepresentative = CommunityRepresentativeInterface(_cr);
 
 		// Initiate election state, first election occures next day.
 		isElectionOpen = false;
@@ -88,6 +95,10 @@ contract CommunityElector {
 		communityCandidate.electorVotes(candidateIdx);
 
 		// if isElectionOpen is false then we could trigger CommunityRepresentative
+	}
+
+	function electAllRepresentative() public {
+		communityRepresentative.electAllRepresentative();
 	}
 
 	function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {

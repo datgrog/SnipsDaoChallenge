@@ -4,7 +4,9 @@ const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
 const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2, "Monero": 3 });
 
-const dayInBlock = 10;
+const dayInBlock = 30;
+
+const CommunityRepresentative = artifacts.require("CommunityRepresentative");
 
 contract('CommunityElector', function (accounts) {
 
@@ -14,10 +16,13 @@ contract('CommunityElector', function (accounts) {
   let communityCandidate;
   let communityElector;
   
-  beforeEach('setup contract for each test', async function () {
+  // seems like already setup by migrations script
+  // as tests passes without "normal" initialization
+  beforeEach("setup contract for each test", async function () {
     communityCandidate = await CommunityCandidate.deployed();
-    communityElector = await CommunityElector.deployed(communityCandidate.address);
-  })
+    communityElector = await CommunityElector.deployed();
+    communityRepresentative = await CommunityRepresentative.deployed();
+  });
 
   it("should have isElectionOpen false at the beggining", async function() {
     const isElectionOpen = await communityElector.isElectionOpen.call();
@@ -26,7 +31,7 @@ contract('CommunityElector', function (accounts) {
       isElectionOpen,
       "seems isElectionOpen is true but should be false."
     );
-  })
+  });
 
   it("should have startVotingBlock set to a day after CommunityElector has been mined.", async function () {
     const startVotingBlock = await communityElector.startVotingBlock.call();
@@ -37,10 +42,10 @@ contract('CommunityElector', function (accounts) {
   	* Ganache default behaviour mines a block for each transaction to confirm them directly 
   	*/
   		
-  	const BlocksOrTxsBeforeTestExecution = 2;
+  	const BlocksOrTxsBeforeTestExecution = 3;
   	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
   		
-  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 10 in test, we should find 13
+  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 30 in test, we should find 33
   	assert.equal(
       startVotingBlock.toNumber(), blockNumber + dayInBlock, 
       "seems like a day equivalent wasn't found in startVotingBlock"
@@ -214,6 +219,15 @@ contract('CommunityElector', function (accounts) {
     
     throw new Error("I should never see this!");
   });
+
+  // it("test interaction with communityrepresentative", async function() {
+  //   const electTx = await communityElector.electAllRepresentative({from: account0});
+
+  //   console.log(electTx);
+
+  //   const onche = await communityRepresentative.test.call();
+  //   console.log("onche : " + onche.toNumber());
+  // });
 
 });
 

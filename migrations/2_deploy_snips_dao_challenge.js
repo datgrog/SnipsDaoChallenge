@@ -1,5 +1,6 @@
 const CommunityCandidate = artifacts.require("./CommunityCandidate.sol");
 const CommunityElector = artifacts.require("./CommunityElector.sol");
+const CommunityRepresentative = artifacts.require("./CommunityRepresentative.sol");
 const owner = web3.eth.accounts[0];
 
 module.exports = function(deployer) {
@@ -9,9 +10,20 @@ module.exports = function(deployer) {
 	*/
 	deployer.then(async function() {
 		const CommunityCandidateInstance = await deployer.deploy(CommunityCandidate);
-		const CommunityElectorInstance = await deployer.deploy(CommunityElector, CommunityCandidate.address);
+		
+		const CommunityRepresentativeInstance = await deployer.deploy(
+													CommunityRepresentative, 
+													CommunityCandidate.address
+												);
 
+		const CommunityElectorInstance = await deployer.deploy(
+											CommunityElector, 
+											CommunityCandidate.address,
+											CommunityRepresentative.address
+										 );
+		
 		await CommunityCandidateInstance.setCommunityElectorAddr(CommunityElector.address, {from: owner});
+		await CommunityRepresentativeInstance.setCommunityElectorAddr(CommunityElector.address, {from: owner});
 	});
 };
 

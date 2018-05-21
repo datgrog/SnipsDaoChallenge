@@ -1,1 +1,7 @@
 # SnipsDaoChallenge
+
+
+ACCOUNT & KEYS
+
+TOTAL ACCOUNTS TO GENERATE
+25

@@ -12,9 +12,11 @@ contract('CommunityCandidate', function (accounts) {
 
   let communityCandidate;
   
-  beforeEach('setup contract for each test', async function () {
+  // seems like already setup by migrations script
+  // as tests passes without "normal" initialization
+  beforeEach("setup contract for each test", async function () {
     communityCandidate = await CommunityCandidate.deployed();
-  })
+  });
 
   it("shoud have a reference to CommunityElector contract with communityElectorAddr", async function () {
     const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
