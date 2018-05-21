@@ -220,15 +220,6 @@ contract('CommunityElector', function (accounts) {
     throw new Error("I should never see this!");
   });
 
-  // it("test interaction with communityrepresentative", async function() {
-  //   const electTx = await communityElector.electAllRepresentative({from: account0});
-
-  //   console.log(electTx);
-
-  //   const onche = await communityRepresentative.test.call();
-  //   console.log("onche : " + onche.toNumber());
-  // });
-
 });
 
 // https://ethereum.stackexchange.com/questions/24915/testing-contract-interactions-with-truffle

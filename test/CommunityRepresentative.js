@@ -121,6 +121,7 @@ contract('CommunityRepresentative', function (accounts) {
       blockNumber = web3.eth.blockNumber;
     }
 
+    // TODO LAST VOTE WHICH SHOULD TRIGGER electAllRepresentative, moves this logics to next test
     const lastVoteTx = await communityElector.electorVotes(accounts[3], {from: accounts[10]});
     eventLog = lastVoteTx.logs[0];
     eventName = eventLog.event;
@@ -134,16 +135,24 @@ contract('CommunityRepresentative', function (accounts) {
 
   });
 
-  // it("INIT : should fire last vote which trigger electAllRepresentative().", async function() {
-  // 	const blockNumber = web3.eth.blockNumber;
+  // TODO automate in contract lifecycle and more complexe voting simulation to be sure
+  it("should fire last vote which trigger electAllRepresentative().", async function() {
+    const electTx = await communityElector.electAllRepresentative({from: accounts[0]});
+
+    const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
+    console.log(communityRepresentatives);
+  });
+
+  // Helper dbg function
+  //   const blockNumber = web3.eth.blockNumber;
   //   const startVotingBlock = await communityElector.startVotingBlock.call();
   //   const endVotingBlock = await communityElector.endVotingBlock.call();
 
   //   console.log("currentBlock : " + blockNumber);
   //   console.log("startVotingBlock : " + startVotingBlock.toNumber());
   //   console.log("endVotingBlock : " + endVotingBlock.toNumber());
-  // });
 
 });
 
 // https://ethereum.stackexchange.com/questions/18660/batch-transactions-for-metamask-using-sendasync
+// https://ethereum.stackexchange.com/questions/36229/invalid-solidity-type-tuple

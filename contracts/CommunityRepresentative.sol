@@ -1,21 +1,27 @@
 pragma solidity ^0.4.23;
+pragma experimental ABIEncoderV2;
+
 import "./CommunityLib.sol";
 
 // CommunityCandidate interface / ABI
 contract CommunityCandidateInterface {
 	function getCandidatesIdx() public pure returns(address[]) {}
-	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
+	function getCandidate(address) public pure returns(CommunityLib.Candidate) {}
 }
 
 contract CommunityRepresentative {
+
+    struct Representative {
+        address identity;
+        uint voteCount;
+    }
+
 	address constant candidateDeleted = address(0);
 	
 	CommunityCandidateInterface public communityCandidate;
 	address public communityElectorAddr;
 
-	CommunityLib.Candidate[4] communityRepresentative;
-
-	uint public test;
+	address[4] public communityRepresentatives;
 
     modifier onlyIfNotInit {
         require(
@@ -40,18 +46,36 @@ contract CommunityRepresentative {
     function setCommunityElectorAddr(address _ce) public onlyIfNotInit() {
     	communityElectorAddr = _ce;
     }
+    
+    function getCommunityRepresentative() public view returns(address[4]) {
+        return communityRepresentatives;
+    }
 
 	function electAllRepresentative() public onlyCommunityElector {
+        Representative[4] memory communityRepresentativesTmp;
+        
+        CommunityLib.Candidate memory communityRepresentativeTmp;
+        uint communityTmp;
+
 		address[] memory candidatesIdx = communityCandidate.getCandidatesIdx();
-	    uint candidatesCount = 0;
-	    
+
 	    // each candidatesIdx's value equals to candidateDeleted means that the candidate is not one anymore.
-	    for(uint i = 0; i<candidatesIdx.length; i++) {
+	    for(uint i = 0; i < candidatesIdx.length; i++) {
         	if (candidatesIdx[i] != candidateDeleted) {
-        		candidatesCount++;
+                communityRepresentativeTmp = communityCandidate.getCandidate(candidatesIdx[i]);
+                communityTmp = uint(communityRepresentativeTmp.community);
+
+                if (communityRepresentativeTmp.voteCount > communityRepresentativesTmp[communityTmp].voteCount) {
+                    communityRepresentativesTmp[communityTmp].identity = communityRepresentativeTmp.identity;
+                    communityRepresentativesTmp[communityTmp].voteCount = communityRepresentativeTmp.voteCount;
+                }
         	}
     	}
-    	test = candidatesCount;
+
+        // 4 enum length
+        for (uint j = 0; j < 4; j++) {
+            communityRepresentatives[j] = communityRepresentativesTmp[j].identity;
+        }
 	}
 }
 
