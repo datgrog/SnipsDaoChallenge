@@ -1,5 +1,11 @@
 const CommunityCandidate = artifacts.require("CommunityCandidate");
-const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2, "Monero": 3 });
+const CommunityEnum = Object.freeze({
+                        "Bitcoin": 0, "Ethereum": 1, 
+                        "Filecoin": 2, "Monero": 3, 
+                        "Doge": 4, "Cardano": 5, 
+                        "NEO": 6, "Dash": 7, 
+                        "Zcash": 8, "Decred": 9 
+                      });
 
 // Ganache GUI keeps same wallet which is more convenient for testing
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away

@@ -21,7 +21,7 @@ contract CommunityRepresentative {
 	CommunityCandidateInterface public communityCandidate;
 	address public communityElectorAddr;
 
-	address[4] public communityRepresentatives;
+	address[10] public communityRepresentatives;
 
     modifier onlyIfNotInit {
         require(
@@ -47,12 +47,12 @@ contract CommunityRepresentative {
     	communityElectorAddr = _ce;
     }
     
-    function getCommunityRepresentative() public view returns(address[4]) {
+    function getCommunityRepresentative() public view returns(address[10]) {
         return communityRepresentatives;
     }
 
 	function electAllRepresentative() public onlyCommunityElector {
-        Representative[4] memory communityRepresentativesTmp;
+        Representative[10] memory communityRepresentativesTmp;
         
         CommunityLib.Candidate memory communityRepresentativeTmp;
         uint communityTmp;
@@ -73,7 +73,7 @@ contract CommunityRepresentative {
     	}
 
         // 4 enum length
-        for (uint j = 0; j < 4; j++) {
+        for (uint j = 0; j < 10; j++) {
             communityRepresentatives[j] = communityRepresentativesTmp[j].identity;
         }
 	}

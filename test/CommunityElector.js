@@ -2,9 +2,15 @@ const helper = require("./Helper.js");
 
 const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
-const CommunityEnum = Object.freeze({"Bitcoin": 0, "Ethereum": 1, "Filecoin": 2, "Monero": 3 });
+const CommunityEnum = Object.freeze({
+                        "Bitcoin": 0, "Ethereum": 1, 
+                        "Filecoin": 2, "Monero": 3, 
+                        "Doge": 4, "Cardano": 5, 
+                        "NEO": 6, "Dash": 7, 
+                        "Zcash": 8, "Decred": 9 
+                      });
 
-const dayInBlock = 30;
+const dayInBlock = 40;
 
 const CommunityRepresentative = artifacts.require("CommunityRepresentative");
 
@@ -45,7 +51,7 @@ contract('CommunityElector', function (accounts) {
   	const BlocksOrTxsBeforeTestExecution = 3;
   	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
   		
-  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 30 in test, we should find 33
+  	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 40 in test, we should find 33
   	assert.equal(
       startVotingBlock.toNumber(), blockNumber + dayInBlock, 
       "seems like a day equivalent wasn't found in startVotingBlock"

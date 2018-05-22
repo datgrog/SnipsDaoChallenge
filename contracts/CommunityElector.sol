@@ -3,29 +3,30 @@ import "./CommunityLib.sol";
 
 // CommunityCandidate interface / ABI
 contract CommunityCandidateInterface {
-    function electorVotes(address) public {}
+    function electorVotes(address) public pure {}
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
     function getCandidatesCount() public pure returns(uint) {}
 }
 
 // CommunityRepresentative interface / ABI
 contract CommunityRepresentativeInterface {
-	function electAllRepresentative() public {}
+	function electAllRepresentative() pure public {}
 }
 
 contract CommunityElector {
 	/**
 	* As Eth mainet generate new block each 15 sec in avg, 
 	* we defined a day 5760 blocks. 
-	* We use 30 in dev env.
+	* We use 40 in dev env.
 	*/
-	uint constant dayInBlock = 30;
+	uint constant dayInBlock = 40;
 	// uint constant dayInBlock = 5760;
 
 	CommunityCandidateInterface communityCandidate;
 	CommunityRepresentativeInterface communityRepresentative;
 
-	mapping (address => bool[4]) public electorsCommunityVote;
+	// 10 communities
+	mapping (address => bool[10]) public electorsCommunityVote;
 
 	// Election state
 	bool public isElectionOpen;
@@ -52,6 +53,7 @@ contract CommunityElector {
 		if (block.number >= endVotingBlock && isElectionOpen) {
 			startVotingBlock = block.number + (6 * dayInBlock);
 			endVotingBlock = startVotingBlock + dayInBlock;
+			isElectionOpen = false;
 
 			emit ElectionState(false);
 		}
@@ -94,10 +96,12 @@ contract CommunityElector {
 		electorsCommunityVote[msg.sender][uint(community)] = true;
 		communityCandidate.electorVotes(candidateIdx);
 
-		// if isElectionOpen is false then we could trigger CommunityRepresentative
+		if (!isElectionOpen) {
+			electAllRepresentative();
+		}
 	}
 
-	function electAllRepresentative() public {
+	function electAllRepresentative() view private {
 		communityRepresentative.electAllRepresentative();
 	}
 
@@ -116,3 +120,4 @@ contract CommunityElector {
 // https://ethereum.stackexchange.com/questions/3609/returning-a-struct-and-reading-via-web3/3614#3614
 // https://ethereum.stackexchange.com/questions/1701/what-does-the-keyword-memory-do-exactly
 // https://ethereum.stackexchange.com/questions/15166/difference-between-require-and-assert-and-the-difference-between-revert-and-thro
+// https://ethereum.stackexchange.com/questions/32353/what-is-the-difference-between-an-internal-external-and-public-private-function?rq=1
