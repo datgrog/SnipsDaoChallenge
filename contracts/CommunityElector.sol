@@ -4,6 +4,7 @@ import "./CommunityLib.sol";
 // CommunityCandidate interface / ABI
 contract CommunityCandidateInterface {
     function electorVotes(address) public pure {}
+    function cleanCandidatesVoteCount() public pure {}
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
     function getCandidatesCount() public pure returns(uint) {}
 }
@@ -25,8 +26,8 @@ contract CommunityElector {
 	CommunityCandidateInterface communityCandidate;
 	CommunityRepresentativeInterface communityRepresentative;
 
-	// 10 communities
-	mapping (address => bool[10]) public electorsCommunityVote;
+	address[] public electorsIdx;
+	mapping (address => bool[10]) electorsCommunityVote; // 10 communities
 
 	// Election state
 	bool public isElectionOpen;
@@ -41,23 +42,29 @@ contract CommunityElector {
 		_;
 	}
 
-	modifier updateElectionState {
+	modifier openElectionState {
 		// The first vote during the voting period update isElectionOpen.
 		if (block.number < endVotingBlock && !isElectionOpen) {
 			isElectionOpen = true;
 
 			emit ElectionState(true);
+			cleanElectionState();
 		}
+		_;
+	}
 
+	modifier closeElectionState {
+		_;
 		// The last vote during the voting period update isElectionOpen.
 		if (block.number >= endVotingBlock && isElectionOpen) {
-			startVotingBlock = block.number + (6 * dayInBlock);
+			startVotingBlock = block.number + dayInBlock;
+			// startVotingBlock = block.number + (6 * dayInBlock);
 			endVotingBlock = startVotingBlock + dayInBlock;
 			isElectionOpen = false;
 
 			emit ElectionState(false);
+			electAllRepresentative();
 		}
-		_;
 	}
     
     /**
@@ -75,7 +82,7 @@ contract CommunityElector {
 		endVotingBlock = startVotingBlock + dayInBlock;
 	}
 
-	function electorVotes(address candidateIdx) public onlyAfterStartVotingBlock updateElectionState {
+	function electorVotes(address candidateIdx) public onlyAfterStartVotingBlock openElectionState closeElectionState {
 		// Fetch community info related to candidateIdx
 	 	bytes32 pseudo; 
 	 	CommunityLib.CommunityChoices community; 
@@ -94,15 +101,27 @@ contract CommunityElector {
 		// Update that current msg.sender has voted given a specific community
 		// and fire the vote.
 		electorsCommunityVote[msg.sender][uint(community)] = true;
-		communityCandidate.electorVotes(candidateIdx);
+		electorsIdx.push(msg.sender);
 
-		if (!isElectionOpen) {
-			electAllRepresentative();
-		}
+		communityCandidate.electorVotes(candidateIdx);
 	}
 
+	// why view works ?
 	function electAllRepresentative() view private {
 		communityRepresentative.electAllRepresentative();
+	}
+
+	function cleanElectionState() private {
+		// clean each candidate voteCount
+		communityCandidate.cleanCandidatesVoteCount();
+
+		// clean each electorsCommunityVote
+		address electorIdx;
+
+	    for(uint i = 0; i < electorsIdx.length; i++) {
+	    	electorIdx = electorsIdx[i]; 
+        	delete electorsCommunityVote[electorIdx];	
+    	}
 	}
 
 	function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
@@ -111,6 +130,10 @@ contract CommunityElector {
 
     function getCandidatesCount() public view returns (uint) {
         return communityCandidate.getCandidatesCount();
+    }
+
+    function getElectorCommunityVote(address electorIdx) public view returns(bool[10]) {
+    	return electorsCommunityVote[electorIdx];
     }
 }
 

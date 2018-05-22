@@ -172,7 +172,47 @@ contract('CommunityRepresentative', function (accounts) {
       communityRepresentatives[9].valueOf(), "0x19185471377a3652c32d480447854c164be388c0", 
       "Decred representative is not @candidate18"
     );
+  });
 
+  it("should reset state of the election when the first next allowed vote is fire", async function () {
+  	let blockNumber = web3.eth.blockNumber;
+    let startVotingBlock = await communityElector.startVotingBlock.call();
+
+    while (blockNumber < startVotingBlock - 1) {
+      await helper.mineBlock();
+      blockNumber = web3.eth.blockNumber;
+    }
+
+    // As a candidate
+    let candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  	assert.equal(
+      candidateInfo[3].toNumber(), 4, 
+      "Candidate should have 4 votes."
+    );
+    
+    // As an elector
+    let electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
+    assert.isTrue(electorsCommunityVote[0], "electorsCommunityVote[0] is false but should be true here.");
+
+    // TRIGGER RESET
+    // should fire the first vote of the second voting period which trigger election reset
+    const firstVoteTx = await communityElector.electorVotes(accounts[1], {from: accounts[0]});
+    const eventLog = firstVoteTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
+
+    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
+    assert.isTrue(eventArgs.state, "Voting period should be open but is close.");
+    // END TRIGGER RESET
+
+	candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  	assert.equal(
+      candidateInfo[3].toNumber(), 0,
+      "Candidate should have 0 vote."
+    );
+
+    electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
+    assert.isFalse(electorsCommunityVote[0], "electorsCommunityVote[0] is false but should be true here.");
   });
 
 });

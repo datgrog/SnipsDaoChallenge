@@ -103,7 +103,18 @@ contract CommunityCandidate {
     function electorVotes(address candidateIdx) public onlyCommunityElector {
     	registeredCandidate[candidateIdx].voteCount++;
     }
-}
+
+    function cleanCandidatesVoteCount() public onlyCommunityElector {
+        address candidateIdx;
+
+        for(uint i = 0; i < candidatesIdx.length; i++) {
+            candidateIdx = candidatesIdx[i]; 
+            if (candidateIdx != candidateDeleted) {
+                delete registeredCandidate[candidateIdx].voteCount;
+            }
+        }
+    }
+ }
 
 // https://medium.com/loom-network/ethereum-solidity-memory-vs-storage-how-to-initialize-an-array-inside-a-struct-184baf6aa2eb
 // https://ethereum.stackexchange.com/questions/13201/if-everyone-runs-the-same-transaction-why-does-only-the-miner-get-gas?rq=
