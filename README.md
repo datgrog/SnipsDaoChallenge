@@ -9,6 +9,14 @@ The contract must handle:
 - receiving applications to become a representative
 - running the election
 
+**Summary**
+
+* [Stack technique](#stack-technique)
+* [Design](#design)
+* [How this election system can be cheated](#how-this-election-system-can-be-cheated)
+* [Installation](#installation)
+* [Tests](#tests)
+
 ## Stack technique
 
 - Ethereum in memory blockchain, Ganache Version 1.1.0 (GUI or CLI)
@@ -33,7 +41,11 @@ The contract must handle:
 
 [![Lifecycle](docs/pictures/snips_dao_lifecycle.png)](docs/pictures/snips_dao_lifecycle.png)
 
-## Setup local environment
+## How this election system can be cheated
+
+Well well well.
+
+## Installation
 
 #### Get and Configure Ganache
 
@@ -60,7 +72,7 @@ npm install truffle -g
 
 ## Tests
 
-:heavy_exclamation_mark: As it takes times to generate *fake* blocks with ganache, in **DEV** we set *dayInBlock* to 40 in both `CommunityElector.sol` and `CommunityElector.js` but should be set to 5760 in **PROD**.
+:heavy_exclamation_mark: As it takes times to generate *fake* blocks with ganache, in **DEV** we set *dayInBlock* to 40 in both `CommunityElector.sol` and `CommunityElector.js` but should be set to 5760 in **PROD**.<br>
 In the same logic, we also modify `startVotingBlock` in the `modifier closeElectionState` within CommunityElector contract.
 
 ```
