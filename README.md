@@ -22,11 +22,13 @@ The contract must handle:
 [![Design](docs/pictures/snips_dao_design.png)](docs/pictures/snips_dao_design.png)
 
 <br>
+
 | Contract                | Responsability                 |
 |-------------------------|--------------------------------|
 | CommunityRepresentative | Reference to query current representative's identity from any community that the DAO support. |
 | CommunityCandidate | Manage candidate registration or deregistration and keep their vote up to date. This contract guarantees that any vote came from CommunityElector's contract. |
 | CommunityElector | Core of the DAO as it's main responsability is to manage the state of the continuous rotating election. It also handle electors and verify that they do not vote more than once for each community. |
+
 <br>
 
 [![Lifecycle](docs/pictures/snips_dao_lifecycle.png)](docs/pictures/snips_dao_lifecycle.png)
