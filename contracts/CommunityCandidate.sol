@@ -96,7 +96,7 @@ contract CommunityCandidate {
         return candidatesIdx;
     }
 
-    function electorVotes(address candidateIdx) public onlyCommunityElector {
+    function electorVote(address candidateIdx) public onlyCommunityElector {
     	candidates[candidateIdx].voteCount++;
     }
 

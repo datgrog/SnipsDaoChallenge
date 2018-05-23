@@ -3,7 +3,7 @@ import "./CommunityLib.sol";
 
 // CommunityCandidate interface / ABI
 contract CommunityCandidateInterface {
-    function electorVotes(address) public pure {}
+    function electorVote(address) public pure {}
     function cleanCandidatesVoteCount() public pure {}
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
 }
@@ -82,7 +82,7 @@ contract CommunityElector {
 		endVotingBlock = startVotingBlock + dayInBlock;
 	}
 
-	function electorVotes(address candidateIdx) public onlyAfterStartVotingBlock openElectionState closeElectionState {
+	function electorVote(address candidateIdx) public onlyAfterStartVotingBlock openElectionState closeElectionState {
 		// Fetch community info related to candidateIdx
 	 	bytes32 pseudo; 
 	 	CommunityLib.CommunityChoices community; 
@@ -103,7 +103,7 @@ contract CommunityElector {
 		electorsFirewallVote[msg.sender][uint(community)] = true;
 		electorsIdx.push(msg.sender);
 
-		communityCandidate.electorVotes(candidateIdx);
+		communityCandidate.electorVote(candidateIdx);
 	}
 
 	// Why view works ?

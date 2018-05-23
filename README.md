@@ -1,6 +1,7 @@
 # SnipsDaoChallenge
 
-Your challenge is to write an ethereum smart contract to elect 10 community “representatives”. The election must run continuously, enabling a rotation of the 10 representative.
+Your challenge is to write an ethereum smart contract to elect 10 community “representatives”. <br>
+The election must run continuously, enabling a rotation of the 10 representative.
 
 The contract must handle:
 
@@ -18,7 +19,8 @@ The contract must handle:
 
 ## Design
 
-Waow
+[![Design](docs/pictures/snips_dao_design.png)](docs/pictures/snips_dao_design.png)
+[![Lifecycle](docs/pictures/snips_dao_lifecycle.png)](docs/pictures/snips_dao_lifecycle.png)
 
 ## Setup local environment
 
@@ -27,17 +29,17 @@ Waow
 Get [ganache](http://truffleframework.com/ganache/) GUI, and launch it.<br>
 At the top right of the windows, clics on the "option" wheel.<br>
 
-> On the **SERVER** tab, where you should be by default, check that :
-> - hostname is 127.0.0.1
-> - port is 7545
-> - network id is 5777
-> - both Automine and error are activated
->
-> On the **ACCOUNTS & KEYS** tab :
-> - increase the total accounts to generate to 25
-> - set the Mnemonic to "onion tape alien arctic brush claim verb panther panic issue domain away".
->
-> After these changes, just clic on RESTART button on the top right.
+On the **SERVER** tab, where you should be by default, check that :
+- hostname is 127.0.0.1
+- port is 7545
+- network id is 5777
+- both Automine and error are activated
+
+On the **ACCOUNTS & KEYS** tab :
+- increase the total accounts to generate to 25
+- set the Mnemonic to "onion tape alien arctic brush claim verb panther panic issue domain away".
+
+After these changes, just clic on RESTART button on the top right.
 
 #### Install truffle
 
@@ -47,7 +49,7 @@ npm install truffle -g
 
 ## Tests
 
-/!\ As it takes times to generate *fake* blocks with ganache, in **DEV** we set *dayInBlock* to 40 in both `CommunityElector.sol` and `CommunityElector.js` but should be set to 5760 in **PROD**.
+:heavy_exclamation_mark: As it takes times to generate *fake* blocks with ganache, in **DEV** we set *dayInBlock* to 40 in both `CommunityElector.sol` and `CommunityElector.js` but should be set to 5760 in **PROD**.
 
 ```
 truffle test
