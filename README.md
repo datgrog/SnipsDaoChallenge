@@ -61,6 +61,7 @@ npm install truffle -g
 ## Tests
 
 :heavy_exclamation_mark: As it takes times to generate *fake* blocks with ganache, in **DEV** we set *dayInBlock* to 40 in both `CommunityElector.sol` and `CommunityElector.js` but should be set to 5760 in **PROD**.
+In the same logic, we also modify `startVotingBlock` in the `modifier closeElectionState` within CommunityElector contract.
 
 ```
 truffle test
