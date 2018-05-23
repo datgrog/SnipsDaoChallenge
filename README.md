@@ -11,14 +11,14 @@ The contract must handle:
 
 **Summary**
 
-* [Stack technique](#stack-technique)
+* [Technology Stack](#technology-stack)
 * [Design](#design)
 * [How this election system can be cheated](#how-this-election-system-can-be-cheated)
 * [Installation](#installation)
 * [Tests](#tests)
 * [Playing](#playing)
 
-## Stack technique
+## Technology Stack
 
 - Ethereum in memory blockchain, Ganache Version 1.1.0 (GUI or CLI)
 - Truffle v4.1.8 (core: 4.1.8)
@@ -44,7 +44,10 @@ The contract must handle:
 
 ## How this election system can be cheated
 
-Well well well.
+In this design, we choose to not rely on any oracles, which means that, if the contracts run as expected, lifecycle of this DAO is as autonomous as it could be in this decentralized computer. However, it's important to mention that there is downsides. The main one on this specific Dapp in about the cost in gas regarding both first and last vote given an election. Because each triggers function that takes care of the correct election state, it means the electors (or a tiny subset) takes care of the cost of the application to themself.
+
+Election could easily be cheated as there is nothing preventing an user to hide behind multiple ethereum accounts to vote multiple times, which is known as the [Sybil attacks](https://en.wikipedia.org/wiki/Sybil_attack). It's well known in peer-to-peer network topology and there is no built-in solution. 
+One "workaround" possible would be to implement a safeguard or more specifically an oracle which would have the responsability to guarantee each elector's ethereum identity based on "IRL proof". As we currently vote by showing an national card, there is an "official public organisation" which creates/controls/manage them. Such organisation could deploy a smartcontract with public functions allowing anyone to use it as an API to guarantee that each vote is related to one unique person. The bad thing here is that this oracle would become our DAO SPOF but as we already rely on this security IRL then, why not... 
 
 ## Installation
 
