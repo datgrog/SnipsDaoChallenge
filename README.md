@@ -16,6 +16,7 @@ The contract must handle:
 * [How this election system can be cheated](#how-this-election-system-can-be-cheated)
 * [Installation](#installation)
 * [Tests](#tests)
+* [Playing](#playing)
 
 ## Stack technique
 
@@ -79,7 +80,7 @@ In the same logic, we also modify `startVotingBlock` in the `modifier closeElect
 truffle test
 ```
 
-## Playing manually
+## Playing
 
 ```
 truffle migrate --network development // --reset if needed
