@@ -5,8 +5,7 @@ curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"evm_mine","params
 curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"miner_start","params":[]}'
 curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"miner_stop","params":[]}'
 
-truffle migrate --network development --reset
-truffle console --network development
+
 
 // Playing with CommunityCandidate contract
 account0 = web3.eth.accounts[0];
