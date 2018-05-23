@@ -10,18 +10,12 @@ contract CommunityCandidateInterface {
 }
 
 contract CommunityRepresentative {
-
-    struct Representative {
-        address identity;
-        uint voteCount;
-    }
-
 	address constant candidateDeleted = address(0);
 	
 	CommunityCandidateInterface public communityCandidate;
 	address public communityElectorAddr;
 
-	address[10] public communityRepresentatives;
+	address[10] public representatives;
 
     modifier onlyIfNotInit {
         require(
@@ -48,11 +42,11 @@ contract CommunityRepresentative {
     }
     
     function getCommunityRepresentative() public view returns(address[10]) {
-        return communityRepresentatives;
+        return representatives;
     }
 
 	function electAllRepresentative() public onlyCommunityElector {
-        Representative[10] memory communityRepresentativesTmp;
+        CommunityLib.Representative[10] memory representativesTmp;
         
         CommunityLib.Candidate memory communityRepresentativeTmp;
         uint communityTmp;
@@ -65,16 +59,16 @@ contract CommunityRepresentative {
                 communityRepresentativeTmp = communityCandidate.getCandidate(candidatesIdx[i]);
                 communityTmp = uint(communityRepresentativeTmp.community);
 
-                if (communityRepresentativeTmp.voteCount > communityRepresentativesTmp[communityTmp].voteCount) {
-                    communityRepresentativesTmp[communityTmp].identity = communityRepresentativeTmp.identity;
-                    communityRepresentativesTmp[communityTmp].voteCount = communityRepresentativeTmp.voteCount;
+                if (communityRepresentativeTmp.voteCount > representativesTmp[communityTmp].voteCount) {
+                    representativesTmp[communityTmp].identity = communityRepresentativeTmp.identity;
+                    representativesTmp[communityTmp].voteCount = communityRepresentativeTmp.voteCount;
                 }
         	}
     	}
 
         // 4 enum length
         for (uint j = 0; j < 10; j++) {
-            communityRepresentatives[j] = communityRepresentativesTmp[j].identity;
+            representatives[j] = representativesTmp[j].identity;
         }
 	}
 }

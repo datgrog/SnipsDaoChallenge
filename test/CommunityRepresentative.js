@@ -20,9 +20,9 @@ contract('CommunityRepresentative', function (accounts) {
   // seems like already setup by migrations script
   // as tests passes without "normal" initialization
   beforeEach("setup contract for each test", async function () {
-	communityCandidate = await CommunityCandidate.deployed();
-	communityElector = await CommunityElector.deployed();
-	communityRepresentative = await CommunityRepresentative.deployed();
+  	communityCandidate = await CommunityCandidate.deployed();
+  	communityElector = await CommunityElector.deployed();
+  	communityRepresentative = await CommunityRepresentative.deployed();
   });
 
   // Does it make sense to set communityCandidateAddr, communityElector 
@@ -56,7 +56,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     await helper.register2CandidateByCommunity(communityCandidate, CommunityEnum, accounts);
 
-	candidatesCount = await communityCandidate.getCandidatesCount.call();
+	  candidatesCount = await communityCandidate.getCandidatesCount.call();
 
   	assert.equal(
       candidatesCount.valueOf(), 20, 
@@ -84,8 +84,14 @@ contract('CommunityRepresentative', function (accounts) {
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
 
-    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-    assert.isTrue(eventArgs.state, "Voting period should be open but is close.");
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isTrue(
+      eventArgs.state, 
+      "Voting period should be open but is close."
+    );
 
     await helper.electionVoteMockup(communityElector, accounts);
   });
@@ -106,15 +112,21 @@ contract('CommunityRepresentative', function (accounts) {
       blockNumber = web3.eth.blockNumber;
     }
 
-	// context where current blockcHeight is endVotingBlock - 1
-	// is when electAllRepresentative would be trigger after one last vote
-	const lastVoteTx = await communityElector.electorVotes(accounts[6], {from: accounts[0]});
+    // context where current blockcHeight is endVotingBlock - 1
+    // is when electAllRepresentative would be trigger after one last vote
+    const lastVoteTx = await communityElector.electorVotes(accounts[6], {from: accounts[0]});
     const eventLog = lastVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
 
-    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-    assert.isFalse(eventArgs.state, "Voting period should be close but is open.");
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isFalse(
+      eventArgs.state, 
+      "Voting period should be close but is open."
+    );
   });
 
   it("should have representative accordingly to previous vote", async function () {
@@ -192,7 +204,10 @@ contract('CommunityRepresentative', function (accounts) {
     
     // As an elector
     let electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-    assert.isTrue(electorsCommunityVote[0], "electorsCommunityVote[0] is false but should be true here.");
+    assert.isTrue(
+      electorsCommunityVote[0], 
+      "electorsCommunityVote[0] is false but should be true here."
+    );
 
     // TRIGGER RESET
     // should fire the first vote of the second voting period which trigger election reset
@@ -201,18 +216,27 @@ contract('CommunityRepresentative', function (accounts) {
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
 
-    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-    assert.isTrue(eventArgs.state, "Voting period should be open but is close.");
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isTrue(
+      eventArgs.state, 
+      "Voting period should be open but is close."
+    );
     // END TRIGGER RESET
 
-	candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+	  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
   	assert.equal(
       candidateInfo[3].toNumber(), 0,
       "Candidate should have 0 vote."
     );
 
     electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-    assert.isFalse(electorsCommunityVote[0], "electorsCommunityVote[0] is false but should be true here.");
+    assert.isFalse(
+      electorsCommunityVote[0], 
+      "electorsCommunityVote[0] is false but should be true here."
+    );
   });
 
 });

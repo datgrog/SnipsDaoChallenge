@@ -2,17 +2,16 @@ pragma solidity ^0.4.23;
 import "./CommunityLib.sol";
 
 contract CommunityCandidate {
-
 	address constant candidateDeleted = address(0);
 	
 	address[] public candidatesIdx;
-	mapping (address => CommunityLib.Candidate) public registeredCandidate;
+	mapping (address => CommunityLib.Candidate) public candidates;
 
 	address public communityElectorAddr;
 
 	modifier onlyOneRegistration {
 		require(
-			registeredCandidate[msg.sender].identity != msg.sender,
+			candidates[msg.sender].identity != msg.sender,
 			"Candidate already register."
 		);
 		_;
@@ -34,9 +33,6 @@ contract CommunityCandidate {
         _;
     }
 
-    /**
-    * The logs that will be emitted in every step of the contract's life cycle.
-    */
 	event CandidateRegistered(address identity);
 	event CandidateDeregistered(address identity);
 
@@ -52,14 +48,14 @@ contract CommunityCandidate {
 		* We save candidate with a mapping and keep tracks of all entries indexes, 
 		* by saving them within an array, allowing the contract to iterates over all candidates. 
 		*/
-		registeredCandidate[msg.sender] = candidate;
+		candidates[msg.sender] = candidate;
  		candidatesIdx.push(msg.sender);
 
         emit CandidateRegistered(candidate.identity);
 	}
 
 	function deregisterCandidate() public {
-		// TODO modifier to ensure the candidate is not the current representative of any communities!
+		// ENHANCEMENT - modifier to ensure the candidate is not the a current representative
 	    for(uint i = 0; i<candidatesIdx.length; i++) {
     		if (candidatesIdx[i] == msg.sender) {
     			/**
@@ -76,9 +72,12 @@ contract CommunityCandidate {
     	emit CandidateDeregistered(msg.sender);
 	}
 
-	function getCandidatesIdx() public view returns(address[]) {
-		return candidatesIdx;
-	}
+    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
+        return (
+            candidates[candidateIdx].pseudo, candidates[candidateIdx].community, 
+            candidates[candidateIdx].identity, candidates[candidateIdx].voteCount
+        );
+    }
 
     function getCandidatesCount() public view returns(uint) {
 	    uint candidatesCount = 0;
@@ -93,15 +92,12 @@ contract CommunityCandidate {
         return candidatesCount;
     }
 
-    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
-        return (
-        	registeredCandidate[candidateIdx].pseudo, registeredCandidate[candidateIdx].community, 
-        	registeredCandidate[candidateIdx].identity, registeredCandidate[candidateIdx].voteCount
-        );
+    function getCandidatesIdx() public view returns(address[]) {
+        return candidatesIdx;
     }
 
     function electorVotes(address candidateIdx) public onlyCommunityElector {
-    	registeredCandidate[candidateIdx].voteCount++;
+    	candidates[candidateIdx].voteCount++;
     }
 
     function cleanCandidatesVoteCount() public onlyCommunityElector {
@@ -110,7 +106,7 @@ contract CommunityCandidate {
         for(uint i = 0; i < candidatesIdx.length; i++) {
             candidateIdx = candidatesIdx[i]; 
             if (candidateIdx != candidateDeleted) {
-                delete registeredCandidate[candidateIdx].voteCount;
+                delete candidates[candidateIdx].voteCount;
             }
         }
     }

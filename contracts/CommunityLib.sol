@@ -10,6 +10,10 @@ library CommunityLib {
         uint voteCount;
     }
 
+    struct Representative {
+        address identity;
+        uint voteCount;
+    }
 }
 
 // http://solidity.readthedocs.io/en/v0.4.23/types.html?highlight=view#enums

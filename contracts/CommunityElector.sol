@@ -6,7 +6,6 @@ contract CommunityCandidateInterface {
     function electorVotes(address) public pure {}
     function cleanCandidatesVoteCount() public pure {}
 	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
-    function getCandidatesCount() public pure returns(uint) {}
 }
 
 // CommunityRepresentative interface / ABI
@@ -20,14 +19,16 @@ contract CommunityElector {
 	* we defined a day 5760 blocks. 
 	* We use 40 in dev env.
 	*/
+	// DEV
 	uint constant dayInBlock = 40;
+	// PROD
 	// uint constant dayInBlock = 5760;
 
 	CommunityCandidateInterface communityCandidate;
 	CommunityRepresentativeInterface communityRepresentative;
 
 	address[] public electorsIdx;
-	mapping (address => bool[10]) electorsCommunityVote; // 10 communities
+	mapping (address => bool[10]) electorsFirewallVote; // 10 communities
 
 	// Election state
 	bool public isElectionOpen;
@@ -57,7 +58,9 @@ contract CommunityElector {
 		_;
 		// The last vote during the voting period update isElectionOpen.
 		if (block.number >= endVotingBlock && isElectionOpen) {
+			// DEV
 			startVotingBlock = block.number + dayInBlock;
+			// PROD
 			// startVotingBlock = block.number + (6 * dayInBlock);
 			endVotingBlock = startVotingBlock + dayInBlock;
 			isElectionOpen = false;
@@ -67,9 +70,6 @@ contract CommunityElector {
 		}
 	}
     
-    /**
-    * The logs that will be emitted in every step of the contract's life cycle.
-    */
 	event ElectionState(bool state);
 
 	constructor(address _cc, address _cr) public {
@@ -91,36 +91,36 @@ contract CommunityElector {
 
 		(pseudo, community, identity, voteCount) = this.getCandidate(candidateIdx);
          
-		// Compare it against electorsCommunityVote to see
+		// Compare it against electorsFirewallVote to see
 		// if current elector has already vote for a this specific community.
 		require(
-			false == electorsCommunityVote[msg.sender][uint(community)],
+			false == electorsFirewallVote[msg.sender][uint(community)],
 			"Current elector has already vote for a given community."
 		);
 
 		// Update that current msg.sender has voted given a specific community
 		// and fire the vote.
-		electorsCommunityVote[msg.sender][uint(community)] = true;
+		electorsFirewallVote[msg.sender][uint(community)] = true;
 		electorsIdx.push(msg.sender);
 
 		communityCandidate.electorVotes(candidateIdx);
 	}
 
-	// why view works ?
+	// Why view works ?
 	function electAllRepresentative() view private {
 		communityRepresentative.electAllRepresentative();
 	}
 
 	function cleanElectionState() private {
-		// clean each candidate voteCount
+		// Clean each candidate voteCount.
 		communityCandidate.cleanCandidatesVoteCount();
 
-		// clean each electorsCommunityVote
+		// Clean each electorsFirewallVote.
 		address electorIdx;
 
 	    for(uint i = 0; i < electorsIdx.length; i++) {
 	    	electorIdx = electorsIdx[i]; 
-        	delete electorsCommunityVote[electorIdx];	
+        	delete electorsFirewallVote[electorIdx];	
     	}
 	}
 
@@ -128,12 +128,8 @@ contract CommunityElector {
 		return communityCandidate.getCandidate(candidateIdx);
 	}
 
-    function getCandidatesCount() public view returns (uint) {
-        return communityCandidate.getCandidatesCount();
-    }
-
     function getElectorCommunityVote(address electorIdx) public view returns(bool[10]) {
-    	return electorsCommunityVote[electorIdx];
+    	return electorsFirewallVote[electorIdx];
     }
 }
 

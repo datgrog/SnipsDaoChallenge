@@ -18,13 +18,13 @@ contract('CommunityCandidate', function (accounts) {
 
   let communityCandidate;
   
-  // seems like already setup by migrations script
-  // as tests passes without "normal" initialization
+  // Contract instance looks like already setup by migrations script
+  // as tests passes without "normal" initialization / constructor params
   beforeEach("setup contract for each test", async function () {
     communityCandidate = await CommunityCandidate.deployed();
   });
 
-  it("shoud have a reference to CommunityElector contract with communityElectorAddr", async function () {
+  it("shoud have a reference to CommunityElector's contract", async function () {
     const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
 
     assert.notEqual(
@@ -33,11 +33,11 @@ contract('CommunityCandidate', function (accounts) {
     );
   });
 
-  it("should not assign communityElectorAddr if already initiate", async function () {
+  it("should not assign CommunityElector's contract reference if already initiate", async function () {
     const communityElectorAddr = await communityCandidate.communityElectorAddr.call();
     const randomContractAdrr = "0xa5b9d60f32436310afebcfda832817a68921beaf";
 
-    // tx could be fire from anyone but without ABI neither contract Addr,
+    // Tx could be fire from anyone but without ABI neither contract Addr,
     // it's safe to say we got time to be the first to init this var.
     try {
       await communityCandidate.setCommunityElectorAddr(randomContractAdrr);  

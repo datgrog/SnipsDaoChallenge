@@ -78,18 +78,37 @@ contract('CommunityElector', function (accounts) {
   	
   	const candidate = {};
   	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
-  	
-  	assert.equal(web3.toUtf8(candidate.pseudo), "@aantonop", "candidate.pseudo is different than '@aantonop'");
-  	assert.equal(candidate.community.valueOf(), "0", "candidate.community 0 is different than CommunityEnum.Bitcoin");
-  	assert.equal(candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1");
+  	  
+    assert.equal(
+      web3.toUtf8(candidate.pseudo), "@aantonop", 
+      "candidate.pseudo is different than '@aantonop'"
+    );
+    assert.equal(
+      candidate.community.toNumber(), CommunityEnum.Bitcoin, 
+      "candidate.community 0 is different than CommunityEnum.Bitcoin");
+    assert.equal(
+      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
+      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+    );
   });
 
   it("should write CommunityCandidate contract by adding one candidate", async function() {
-
   	await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1})
-	  const candidatesCount = await communityElector.getCandidatesCount.call();
 
-	  assert.equal(candidatesCount.valueOf(), 2, "candidatesCount is different than 2");
+    const candidate = {};
+    [candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account1);
+
+    assert.equal(
+      web3.toUtf8(candidate.pseudo), "@VitalikButerin", 
+      "candidate.pseudo is different than '@VitalikButerin'"
+    );
+    assert.equal(
+      candidate.community.toNumber(), CommunityEnum.Ethereum, 
+      "candidate.community 1 is different than CommunityEnum.Ethereum");
+    assert.equal(
+      candidate.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", 
+      "candidate.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac"
+    );
   });
 
   it("should reject vote while startVotingBlock has not been reached", async function() {
@@ -145,21 +164,29 @@ contract('CommunityElector', function (accounts) {
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
 
-    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-    assert.isTrue(eventArgs.state, "In the context where Voting period open the state says closed.");
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isTrue(
+      eventArgs.state, 
+      "In the context where Voting period open the state says closed."
+    );
 
     // after the first vote the the state should be true aka open
     isElectionOpen = await communityElector.isElectionOpen.call();
     assert.isTrue(
-      isElectionOpen, true, 
+      isElectionOpen, 
       "seems isElectionOpen is true but should be false as voting hasn't yet started."
     );
 
     // as we vote once the candidate should only have one vote
     candidate0Info = await communityElector.getCandidate.call(account0);
     candidate0VoteCount = candidate0Info[3].toNumber();
-    assert.equal(candidate0VoteCount, 1, "candidate0 should have only one vote ");
-
+    assert.equal(
+      candidate0VoteCount, 1, 
+      "candidate0 should have only one vote "
+    );
  });
 
   it("should not allow an user to vote multiple times a specific community candidate.", async function() {
@@ -201,21 +228,32 @@ contract('CommunityElector', function (accounts) {
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
 
-    assert.equal(eventName, "ElectionState", "Event name is not equals to 'ElectionState'");
-    assert.isFalse(eventArgs.state, "In the context where Voting period open the state says closed.");
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isFalse(
+      eventArgs.state, 
+      "In the context where Voting period open the state says closed."
+    );
 
     const vitalikInfo = await communityElector.getCandidate.call(account1);
     const vitalikVoteCount = vitalikInfo[3].toNumber();
 
-    assert.equal(vitalikVoteCount, 2, "vitalik should have 2 vote.");
+    assert.equal(
+      vitalikVoteCount, 2, 
+      "vitalik should have 2 vote."
+    );
   });
 
   it("should fail to vote as the startVotingBlock has been updated previously", async function() {
     const blockNumber = web3.eth.blockNumber;
     const startVotingBlock = await communityElector.startVotingBlock.call();
 
-
-    assert.isBelow(blockNumber, startVotingBlock, "blockNumber should not be equal or above startVotingBlock");
+    assert.isBelow(
+      blockNumber, startVotingBlock, 
+      "blockNumber should not be equal or above startVotingBlock"
+    );
     
     try {
       await communityElector.electorVotes(account1, {from: account0});  
