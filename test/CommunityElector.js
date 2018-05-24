@@ -2,13 +2,6 @@ const helper = require("./Helper.js");
 
 const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
-const CommunityEnum = Object.freeze({
-                        "Bitcoin": 0, "Ethereum": 1, 
-                        "Filecoin": 2, "Monero": 3, 
-                        "Doge": 4, "Cardano": 5, 
-                        "NEO": 6, "Dash": 7, 
-                        "Zcash": 8, "Decred": 9 
-                      });
 
 const dayInBlock = 40;
 
@@ -18,6 +11,8 @@ contract('CommunityElector', function (accounts) {
 
   const account0 = accounts[0];
   const account1 = accounts[1];
+  const account2 = accounts[2];
+  const account3 = accounts[3];
 
   let communityCandidate;
   let communityElector;
@@ -74,40 +69,22 @@ contract('CommunityElector', function (accounts) {
   	* even if we could find a workaround to access CommunityCandidate previously tested.
   	*/
 
-	  await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
+	  await communityCandidate.registerCandidate("@aantonop", {from: account0});
   	
-  	const candidate = {};
-  	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
-  	  
+    const candidate = {};
+    [candidate.pseudo, candidate.identity, candidate.voteCount] = await communityCandidate.getCandidate.call(account0);
+    
     assert.equal(
       web3.toUtf8(candidate.pseudo), "@aantonop", 
       "candidate.pseudo is different than '@aantonop'"
     );
     assert.equal(
-      candidate.community.toNumber(), CommunityEnum.Bitcoin, 
-      "candidate.community 0 is different than CommunityEnum.Bitcoin");
-    assert.equal(
       candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
       "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
     );
-  });
-
-  it("should write CommunityCandidate contract by adding one candidate", async function() {
-  	await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1})
-
-    const candidate = {};
-    [candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account1);
-
     assert.equal(
-      web3.toUtf8(candidate.pseudo), "@VitalikButerin", 
-      "candidate.pseudo is different than '@VitalikButerin'"
-    );
-    assert.equal(
-      candidate.community.toNumber(), CommunityEnum.Ethereum, 
-      "candidate.community 1 is different than CommunityEnum.Ethereum");
-    assert.equal(
-      candidate.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", 
-      "candidate.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac"
+      candidate.voteCount.toNumber(), 0, 
+      "candidate voteCount should be 0."
     );
   });
 
@@ -122,7 +99,7 @@ contract('CommunityElector', function (accounts) {
 	  
     // catch the revert() exeception and return true as the test succeed
 	  try {
-		  await communityElector.electorVotes(account0, {from: account1});
+		  await communityElector.electorVote(account0, {from: account1});
 	  } catch (e) {
       return true;
 	  }
@@ -145,7 +122,7 @@ contract('CommunityElector', function (accounts) {
     }
 
     let candidate0Info = await communityElector.getCandidate.call(account0);
-    let candidate0VoteCount = candidate0Info[3].toNumber();    
+    let candidate0VoteCount = candidate0Info[2].toNumber();    
     assert.equal(
       candidate0VoteCount, 0, 
       "candidate0 should not have any vote yet"
@@ -158,8 +135,8 @@ contract('CommunityElector', function (accounts) {
       "seems isElectionOpen is true but should be false as voting hasn't yet started."
     );
 
-    // The account1 votes and it's the first one so we catch the event
-    const voteTx = await communityElector.electorVotes(account0, {from: account1});
+    // The account0 votes and it's the first one so we catch the event
+    const voteTx = await communityElector.electorVote(account0, {from: account0});
     const eventLog = voteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -182,33 +159,42 @@ contract('CommunityElector', function (accounts) {
 
     // as we vote once the candidate should only have one vote
     candidate0Info = await communityElector.getCandidate.call(account0);
-    candidate0VoteCount = candidate0Info[3].toNumber();
+    candidate0VoteCount = candidate0Info[2].toNumber();
     assert.equal(
       candidate0VoteCount, 1, 
       "candidate0 should have only one vote "
     );
  });
 
-  it("should not allow an user to vote multiple times a specific community candidate.", async function() {
+  it("should write CommunityCandidate contract by voting", async function() {
+    await communityElector.electorVote(account0, {from: account1});
+
+    const candidate = {};
+    [candidate.pseudo, candidate.identity, candidate.voteCount] = await communityElector.getCandidate.call(account0);
+
+    assert.equal(
+      web3.toUtf8(candidate.pseudo), "@aantonop", 
+      "candidate.pseudo is different than '@aantonop'"
+    );
+    assert.equal(
+      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
+      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+    );
+    assert.equal(
+      candidate.voteCount.toNumber(), 2, 
+      "candidate voteCount should be 2."
+    );
+  });
+
+  it("should not allow an user to vote multiple times.", async function() {
 
   	try {
-  		await communityElector.electorVotes(account0, {from: account1});
+      // beware one could vote for an eth address that does not refers to a registered candidate, on purpose.
+  		await communityElector.electorVote(account1, {from: account1});
   	} catch (e) {
   		return true;
   	}
   	throw new Error("I should never see this!");
-  });
-
-  it("should allow an user to vote to different community candidate.", async function() {
-  	const vitalik = web3.eth.accounts[1];
-
-  	// In this case vitalik vote for himself after voting for aantonop
- 	  await communityElector.electorVotes(vitalik, {from: vitalik});
-
- 	  const vitalikInfo = await communityElector.getCandidate.call(vitalik);
- 	  vitalikVoteCount = vitalikInfo[3].toNumber();
- 	  
-    assert.equal(vitalikVoteCount, 1, "vitalik should have only his own vote.");
   });
 
   it("should check ElectionState event FALSE by having the LAST vote after or equals endVotingBlock has been reach", async function() {
@@ -222,8 +208,8 @@ contract('CommunityElector', function (accounts) {
       blockNumber = web3.eth.blockNumber;
     }
 
-    // The account0 votes and it's the first one so we catch the event
-    const voteTx = await communityElector.electorVotes(account1, {from: account0});
+    // The account2 votes and it's the last one so we catch the event
+    const voteTx = await communityElector.electorVote(account2, {from: account2});
     const eventLog = voteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -237,12 +223,12 @@ contract('CommunityElector', function (accounts) {
       "In the context where Voting period open the state says closed."
     );
 
-    const vitalikInfo = await communityElector.getCandidate.call(account1);
-    const vitalikVoteCount = vitalikInfo[3].toNumber();
+    const candidate2Info = await communityElector.getCandidate.call(account2);
+    const candidate2VoteCount = candidate2Info[2].toNumber();
 
     assert.equal(
-      vitalikVoteCount, 2, 
-      "vitalik should have 2 vote."
+      candidate2VoteCount, 1, 
+      "candidate2 should have 1 vote."
     );
   });
 
@@ -256,7 +242,7 @@ contract('CommunityElector', function (accounts) {
     );
     
     try {
-      await communityElector.electorVotes(account1, {from: account0});  
+      await communityElector.electorVote(account0, {from: account0});  
     } catch (e) {
       return true;
     }

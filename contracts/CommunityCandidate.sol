@@ -40,8 +40,8 @@ contract CommunityCandidate {
     	communityElectorAddr = _ce;
     }
 
-	function registerCandidate(bytes32 pseudo, CommunityLib.CommunityChoices community) public onlyOneRegistration {
-		CommunityLib.Candidate memory candidate = CommunityLib.Candidate(pseudo, community, msg.sender, 0);
+	function registerCandidate(bytes32 pseudo) public onlyOneRegistration {
+		CommunityLib.Candidate memory candidate = CommunityLib.Candidate(pseudo, msg.sender, 0);
 
 		/**
 		* By using a mapping we ensure candidate could not register for more than one community.
@@ -72,9 +72,9 @@ contract CommunityCandidate {
     	emit CandidateDeregistered(msg.sender);
 	}
 
-    function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
+    function getCandidate(address candidateIdx) public view returns(bytes32, address, uint) {
         return (
-            candidates[candidateIdx].pseudo, candidates[candidateIdx].community, 
+            candidates[candidateIdx].pseudo, 
             candidates[candidateIdx].identity, candidates[candidateIdx].voteCount
         );
     }

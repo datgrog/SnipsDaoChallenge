@@ -4,14 +4,6 @@ const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
 const CommunityRepresentative = artifacts.require("CommunityRepresentative");
 
-const CommunityEnum = Object.freeze({
-                        "Bitcoin": 0, "Ethereum": 1, 
-                        "Filecoin": 2, "Monero": 3, 
-                        "Doge": 4, "Cardano": 5, 
-                        "NEO": 6, "Dash": 7, 
-                        "Zcash": 8, "Decred": 9 
-                      });
-
 contract('CommunityRepresentative', function (accounts) {
   let communityCandidate;
   let communityElector;
@@ -46,7 +38,7 @@ contract('CommunityRepresentative', function (accounts) {
     );
   });
 
-  it("INIT : should register 20 candidates", async function() {
+  it("INIT : should register 9 candidates", async function() {
   	let candidatesCount = await communityCandidate.getCandidatesCount.call();
 
   	assert.equal(
@@ -54,13 +46,13 @@ contract('CommunityRepresentative', function (accounts) {
       "candidatesCount is different than 0"
     );
 
-    await helper.register2CandidateByCommunity(communityCandidate, CommunityEnum, accounts);
+    await helper.register9Candidates(communityCandidate, accounts);
 
 	  candidatesCount = await communityCandidate.getCandidatesCount.call();
 
   	assert.equal(
-      candidatesCount.valueOf(), 20, 
-      "candidatesCount is different than 20"
+      candidatesCount.valueOf(), 9, 
+      "candidatesCount is different than 9"
     );
 
   });
@@ -76,10 +68,12 @@ contract('CommunityRepresentative', function (accounts) {
       await helper.mineBlock();
       blockNumber = web3.eth.blockNumber;
     }
+
+    await helper.printVotingBlock(web3, communityElector);
     
     // People register as candidate of course 
     // vote for themself as they are allowed to do so.
-    const firstVoteTx = await communityElector.electorVotes(accounts[0], {from: accounts[0]});
+    const firstVoteTx = await communityElector.electorVote(accounts[0], {from: accounts[0]});
     const eventLog = firstVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -92,6 +86,8 @@ contract('CommunityRepresentative', function (accounts) {
       eventArgs.state, 
       "Voting period should be open but is close."
     );
+
+    await helper.printVotingBlock(web3, communityElector);
 
     await helper.electionVoteMockup(communityElector, accounts);
   });
@@ -114,7 +110,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     // context where current blockcHeight is endVotingBlock - 1
     // is when electAllRepresentative would be trigger after one last vote
-    const lastVoteTx = await communityElector.electorVotes(accounts[6], {from: accounts[0]});
+    const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[0]});
     const eventLog = lastVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -129,62 +125,62 @@ contract('CommunityRepresentative', function (accounts) {
     );
   });
 
-  it("should have representative accordingly to previous vote", async function () {
-    const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
+  // it("should have representative accordingly to previous vote", async function () {
+  //   const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
 
-    // Print community representatives
-    // let representative;
-    // let community;
+  //   // Print community representatives
+  //   // let representative;
+  //   // let community;
     
-    // for (let i = 0; i < 10; i++) {
-    // 	representative = await communityCandidate.getCandidate.call(communityRepresentatives[i]);
-    // 	community = representative[1];
-    // 	console.log("Representative - [Community] " + Object.entries(CommunityEnum)[community][0] 
-    // 		+ " [Pseudo] " + web3.toUtf8(representative[0])
-    // 		+ " [Identity] " + representative[2].valueOf());
-    // }
+  //   // for (let i = 0; i < 10; i++) {
+  //   // 	representative = await communityCandidate.getCandidate.call(communityRepresentatives[i]);
+  //   // 	community = representative[1];
+  //   // 	console.log("Representative - [Community] " + Object.entries(CommunityEnum)[community][0] 
+  //   // 		+ " [Pseudo] " + web3.toUtf8(representative[0])
+  //   // 		+ " [Identity] " + representative[2].valueOf());
+  //   // }
 
-  	assert.equal(
-      communityRepresentatives[0].valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
-      "Bitcoin representative is not @aantonop"
-    );
-  	assert.equal(
-      communityRepresentatives[1].valueOf(), "0x80a140e86ce98ca848b27cd20ff5c6fbff93ee5f", 
-      "Ethereum representative is not @gavofyork"
-    );
-  	assert.equal(
-      communityRepresentatives[2].valueOf(), "0xd8ed8081963166baeb520db299b58272a5572bd0", 
-      "Filecoin representative is not @candidate7"
-    );
-  	assert.equal(
-      communityRepresentatives[3].valueOf(), "0x03573b69cc58edd544bab2992c01c281430e500d", 
-      "Monero representative is not @janowitz"
-    );
-  	assert.equal(
-      communityRepresentatives[4].valueOf(), "0xb6399bdb2c828420284f296d4e9cc1016ca1b5fa", 
-      "Doge representative is not @candidate8"
-    );
-  	assert.equal(
-      communityRepresentatives[5].valueOf(), "0xbcaba8657f375838f89145f589a68be91baffc57", 
-      "Cardano representative is not @candidate10"
-    );
-  	assert.equal(
-      communityRepresentatives[6].valueOf(), "0x297b785d6ad25f31a4a3e026364c868d93da26ad", 
-      "NEO representative is not @candidate12"
-    );
-  	assert.equal(
-      communityRepresentatives[7].valueOf(), "0x96a8ef108797af3bf7c02eb3cb4bbfeaa4dfe017", 
-      "Dash representative is not @candidate14"
-    );
-  	assert.equal(
-      communityRepresentatives[8].valueOf(), "0x92ae17e1824a479c549af8b2ae678d84ab8d45e0", 
-      "Zcash representative is not @candidate16"
-    );
-  	assert.equal(
-      communityRepresentatives[9].valueOf(), "0x19185471377a3652c32d480447854c164be388c0", 
-      "Decred representative is not @candidate18"
-    );
-  });
+  // 	assert.equal(
+  //     communityRepresentatives[0].valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
+  //     "Bitcoin representative is not @aantonop"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[1].valueOf(), "0x80a140e86ce98ca848b27cd20ff5c6fbff93ee5f", 
+  //     "Ethereum representative is not @gavofyork"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[2].valueOf(), "0xd8ed8081963166baeb520db299b58272a5572bd0", 
+  //     "Filecoin representative is not @candidate7"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[3].valueOf(), "0x03573b69cc58edd544bab2992c01c281430e500d", 
+  //     "Monero representative is not @janowitz"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[4].valueOf(), "0xb6399bdb2c828420284f296d4e9cc1016ca1b5fa", 
+  //     "Doge representative is not @candidate8"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[5].valueOf(), "0xbcaba8657f375838f89145f589a68be91baffc57", 
+  //     "Cardano representative is not @candidate10"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[6].valueOf(), "0x297b785d6ad25f31a4a3e026364c868d93da26ad", 
+  //     "NEO representative is not @candidate12"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[7].valueOf(), "0x96a8ef108797af3bf7c02eb3cb4bbfeaa4dfe017", 
+  //     "Dash representative is not @candidate14"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[8].valueOf(), "0x92ae17e1824a479c549af8b2ae678d84ab8d45e0", 
+  //     "Zcash representative is not @candidate16"
+  //   );
+  // 	assert.equal(
+  //     communityRepresentatives[9].valueOf(), "0x19185471377a3652c32d480447854c164be388c0", 
+  //     "Decred representative is not @candidate18"
+  //   );
+  // });
 
   it("should reset state of the election when the first next allowed vote is fire", async function () {
   	let blockNumber = web3.eth.blockNumber;
@@ -211,7 +207,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     // TRIGGER RESET
     // should fire the first vote of the second voting period which trigger election reset
-    const firstVoteTx = await communityElector.electorVotes(accounts[1], {from: accounts[0]});
+    const firstVoteTx = await communityElector.electorVote(accounts[1], {from: accounts[0]});
     const eventLog = firstVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;

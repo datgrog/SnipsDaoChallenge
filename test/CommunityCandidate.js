@@ -1,11 +1,4 @@
 const CommunityCandidate = artifacts.require("CommunityCandidate");
-const CommunityEnum = Object.freeze({
-                        "Bitcoin": 0, "Ethereum": 1, 
-                        "Filecoin": 2, "Monero": 3, 
-                        "Doge": 4, "Cardano": 5, 
-                        "NEO": 6, "Dash": 7, 
-                        "Zcash": 8, "Decred": 9 
-                      });
 
 // Ganache GUI keeps same wallet which is more convenient for testing
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away
@@ -58,22 +51,22 @@ contract('CommunityCandidate', function (accounts) {
   });
   
   it("should register a candidate", async function () {
-  	await communityCandidate.registerCandidate("@aantonop", CommunityEnum.Bitcoin, {from: account0});
+  	await communityCandidate.registerCandidate("@aantonop", {from: account0});
   	
   	const candidate = {};
-  	[candidate.pseudo, candidate.community, candidate.identity] = await communityCandidate.getCandidate.call(account0);
+  	[candidate.pseudo, candidate.identity, candidate.voteCount] = await communityCandidate.getCandidate.call(account0);
   	
   	assert.equal(
       web3.toUtf8(candidate.pseudo), "@aantonop", 
       "candidate.pseudo is different than '@aantonop'"
     );
   	assert.equal(
-      candidate.community.valueOf(), "0", 
-      "candidate.community 0 is different than CommunityEnum.Bitcoin"
-    );
-  	assert.equal(
       candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
       "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+    );
+    assert.equal(
+      candidate.voteCount.toNumber(), 0, 
+      "candidate voteCount should be 0."
     );
   });
 
@@ -84,7 +77,7 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should check CandidateRegistered event by register another candidate", async function () {
-  	const registerCandidateTx = await communityCandidate.registerCandidate("@VitalikButerin", CommunityEnum.Ethereum, {from: account1});
+  	const registerCandidateTx = await communityCandidate.registerCandidate("@VitalikButerin", {from: account1});
     const eventLog = registerCandidateTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;

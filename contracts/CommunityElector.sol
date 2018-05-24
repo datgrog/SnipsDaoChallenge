@@ -5,7 +5,7 @@ import "./CommunityLib.sol";
 contract CommunityCandidateInterface {
     function electorVote(address) public pure {}
     function cleanCandidatesVoteCount() public pure {}
-	function getCandidate(address) public pure returns(bytes32, CommunityLib.CommunityChoices, address, uint) {}
+	function getCandidate(address) public pure returns(bytes32, address, uint) {}
 }
 
 // CommunityRepresentative interface / ABI
@@ -28,7 +28,7 @@ contract CommunityElector {
 	CommunityRepresentativeInterface communityRepresentative;
 
 	address[] public electorsIdx;
-	mapping (address => bool[10]) electorsFirewallVote; // 10 communities
+	mapping (address => bool) electorsFirewallVote;
 
 	// Election state
 	bool public isElectionOpen;
@@ -85,22 +85,21 @@ contract CommunityElector {
 	function electorVote(address candidateIdx) public onlyAfterStartVotingBlock openElectionState closeElectionState {
 		// Fetch community info related to candidateIdx
 	 	bytes32 pseudo; 
-	 	CommunityLib.CommunityChoices community; 
 	 	address identity; 
 	 	uint voteCount;
 
-		(pseudo, community, identity, voteCount) = this.getCandidate(candidateIdx);
+		(pseudo, identity, voteCount) = this.getCandidate(candidateIdx);
          
 		// Compare it against electorsFirewallVote to see
 		// if current elector has already vote for a this specific community.
 		require(
-			false == electorsFirewallVote[msg.sender][uint(community)],
+			false == electorsFirewallVote[msg.sender],
 			"Current elector has already vote for a given community."
 		);
 
 		// Update that current msg.sender has voted given a specific community
 		// and fire the vote.
-		electorsFirewallVote[msg.sender][uint(community)] = true;
+		electorsFirewallVote[msg.sender] = true;
 		electorsIdx.push(msg.sender);
 
 		communityCandidate.electorVote(candidateIdx);
@@ -124,11 +123,11 @@ contract CommunityElector {
     	}
 	}
 
-	function getCandidate(address candidateIdx) public view returns(bytes32, CommunityLib.CommunityChoices, address, uint) {
+	function getCandidate(address candidateIdx) public view returns(bytes32, address, uint) {
 		return communityCandidate.getCandidate(candidateIdx);
 	}
 
-    function getElectorCommunityVote(address electorIdx) public view returns(bool[10]) {
+    function getElectorCommunityVote(address electorIdx) public view returns(bool) {
     	return electorsFirewallVote[electorIdx];
     }
 }

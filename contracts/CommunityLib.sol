@@ -1,11 +1,9 @@
 pragma solidity ^0.4.23;
 
 library CommunityLib {
-    enum CommunityChoices { Bitcoin, Ethereum, Filecoin, Monero, Doge, Cardano, NEO, Dash, Zcash, Decred }
 
     struct Candidate {
         bytes32 pseudo;
-        CommunityChoices community;
         address identity;
         uint voteCount;
     }
