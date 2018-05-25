@@ -63,7 +63,7 @@ On the **SERVER** tab, where you should be by default, check that :
 - both Automine and error are activated
 
 On the **ACCOUNTS & KEYS** tab :
-- increase the total accounts to generate to 25
+- increase the total accounts to generate to 40
 - set the Mnemonic to "onion tape alien arctic brush claim verb panther panic issue domain away".
 
 After these changes, just clic on RESTART button on the top right.

@@ -127,7 +127,7 @@ contract CommunityElector {
 		return communityCandidate.getCandidate(candidateIdx);
 	}
 
-    function getElectorCommunityVote(address electorIdx) public view returns(bool) {
+    function getElectorFirewallVote(address electorIdx) public view returns(bool) {
     	return electorsFirewallVote[electorIdx];
     }
 }

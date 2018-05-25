@@ -85,7 +85,7 @@ contract('CommunityRepresentative', function (accounts) {
       "Voting period should be open but is close."
     );
 
-    await helper.electionVoteMockup(communityElector, accounts);
+    await helper.electionVoteMockup1(communityElector, accounts);
   });
 
   it("should fire last vote which trigger electAllRepresentative().", async function() {
@@ -153,59 +153,111 @@ contract('CommunityRepresentative', function (accounts) {
     );
   });
 
-  // it("should reset state of the election when the first next allowed vote is fire", async function () {
-  // 	let blockNumber = web3.eth.blockNumber;
-  //   let startVotingBlock = await communityElector.startVotingBlock.call();
+  it("should register other 11 candidates before blockcHeight equals startVotingBlock", async function () {
+    await helper.register11Candidates(communityCandidate, accounts);
+    const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-  //   while (blockNumber < startVotingBlock - 1) {
-  //     await helper.mineBlock();
-  //     blockNumber = web3.eth.blockNumber;
-  //   }
+    assert.equal(
+      candidatesCount.valueOf(), 20, 
+      "candidatesCount is different than 20"
+    );
+  })
 
-  //   // As a candidate
-  //   let candidateInfo = await communityElector.getCandidate.call(accounts[0]);
-  // 	assert.equal(
-  //     candidateInfo[3].toNumber(), 4, 
-  //     "Candidate should have 4 votes."
-  //   );
+  it("should reset state of the election when the first next allowed vote is fire", async function () {
+  	let blockNumber = web3.eth.blockNumber;
+    let startVotingBlock = await communityElector.startVotingBlock.call();
+
+    while (blockNumber < startVotingBlock - 1) {
+      await helper.mineBlock();
+      blockNumber = web3.eth.blockNumber;
+    }
+
+    // As a candidate
+    let candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  	assert.equal(
+      candidateInfo[2].toNumber(), 4, 
+      "Candidate should have 4 votes."
+    );
     
-  //   // As an elector
-  //   let electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-  //   assert.isTrue(
-  //     electorsCommunityVote[0], 
-  //     "electorsCommunityVote[0] is false but should be true here."
-  //   );
+    // As an elector
+    let electorsCommunityVote = await communityElector.getElectorFirewallVote.call(accounts[0]);
+    assert.isTrue(
+      electorsCommunityVote, 
+      "electorsCommunityVote is false but should be true here."
+    );
 
-  //   // TRIGGER RESET
-  //   // should fire the first vote of the second voting period which trigger election reset
-  //   const firstVoteTx = await communityElector.electorVote(accounts[1], {from: accounts[0]});
-  //   const eventLog = firstVoteTx.logs[0];
-  //   const eventName = eventLog.event;
-  //   const eventArgs = eventLog.args;
+    // TRIGGER RESET
+    // should fire the first vote of the second voting period which trigger election reset
+    const firstVoteTx = await communityElector.electorVote(accounts[0], {from: accounts[0]});
+    const eventLog = firstVoteTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
 
-  //   assert.equal(
-  //     eventName, "ElectionState", 
-  //     "Event name is not equals to 'ElectionState'"
-  //   );
-  //   assert.isTrue(
-  //     eventArgs.state, 
-  //     "Voting period should be open but is close."
-  //   );
-  //   // END TRIGGER RESET
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isTrue(
+      eventArgs.state, 
+      "Voting period should be open but is close."
+    );
+    // END TRIGGER RESET
 
-	 //  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
-  // 	assert.equal(
-  //     candidateInfo[3].toNumber(), 0,
-  //     "Candidate should have 0 vote."
-  //   );
+	  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  	assert.equal(
+      candidateInfo[2].toNumber(), 1,
+      "Candidate should have 1 vote."
+    );
 
-  //   electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-  //   assert.isFalse(
-  //     electorsCommunityVote[0], 
-  //     "electorsCommunityVote[0] is false but should be true here."
-  //   );
-  // });
+    electorsCommunityVote = await communityElector.getElectorFirewallVote.call(accounts[0]);
+    assert.isTrue(
+      electorsCommunityVote, 
+      "electorsCommunityVote accounts[1] is true but should be false as he didnt vote yet."
+    );
 
+    electorsCommunityVote = await communityElector.getElectorFirewallVote.call(accounts[1]);
+    assert.isFalse(
+      electorsCommunityVote,
+      "electorsCommunityVote accounts[0] is false but should be true here as he has already voted."
+    );
+  });
+
+  // SECOND ELECTION WITH MORE THAN > 10 candidates
+  it("should vote amongst the 20 candidates and fire last vote which trigger electAllRepresentative().", async function() {
+    await helper.printVotingBlock(web3, communityElector);
+    await helper.electionVoteMockup2(communityElector, accounts);
+    await helper.printVotingBlock(web3, communityElector);
+
+    // let blockNumber = web3.eth.blockNumber;
+    // let endVotingBlock = await communityElector.endVotingBlock.call();
+
+    // // makes sure lastVote has not been fire yet
+    // assert.isBelow(
+    //   blockNumber, endVotingBlock.toNumber(), 
+    //   "blockNumber is not strictly below to endVotingBlock."
+    // );
+
+    // while (blockNumber < endVotingBlock - 1) {
+    //   await helper.mineBlock();
+    //   blockNumber = web3.eth.blockNumber;
+    // }
+
+    // // Context where current blockcHeight is endVotingBlock - 1
+    // // is when electAllRepresentative would be trigger after one last vote
+    // const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[20]});
+    // const eventLog = lastVoteTx.logs[0];
+    // const eventName = eventLog.event;
+    // const eventArgs = eventLog.args;
+
+    // assert.equal(
+    //   eventName, "ElectionState", 
+    //   "Event name is not equals to 'ElectionState'"
+    // );
+    // assert.isFalse(
+    //   eventArgs.state, 
+    //   "Voting period should be close but is open."
+    // );
+  });
 });
 
 // https://ethereum.stackexchange.com/questions/18660/batch-transactions-for-metamask-using-sendasync
