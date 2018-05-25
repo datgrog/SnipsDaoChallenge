@@ -45,7 +45,6 @@ module.exports = {
 	},
 	electionVoteMockup: async function (communityElector, accounts) {
 		// each candidate vote for themself => 9 votes
-	  	await communityElector.electorVote(accounts[0], {from: accounts[0]});
 	  	await communityElector.electorVote(accounts[1], {from: accounts[1]});
 	  	await communityElector.electorVote(accounts[2], {from: accounts[2]});
 	  	await communityElector.electorVote(accounts[3], {from: accounts[3]});
@@ -67,6 +66,5 @@ module.exports = {
 	  	await communityElector.electorVote(accounts[5], {from: accounts[17]});
 	  	await communityElector.electorVote(accounts[6], {from: accounts[18]});
 	  	await communityElector.electorVote(accounts[8], {from: accounts[19]});
-
 	}
 };

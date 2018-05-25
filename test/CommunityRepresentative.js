@@ -68,8 +68,6 @@ contract('CommunityRepresentative', function (accounts) {
       await helper.mineBlock();
       blockNumber = web3.eth.blockNumber;
     }
-
-    await helper.printVotingBlock(web3, communityElector);
     
     // People register as candidate of course 
     // vote for themself as they are allowed to do so.
@@ -87,12 +85,9 @@ contract('CommunityRepresentative', function (accounts) {
       "Voting period should be open but is close."
     );
 
-    await helper.printVotingBlock(web3, communityElector);
-
     await helper.electionVoteMockup(communityElector, accounts);
   });
 
-  // TODO automate in contract lifecycle and more complexe voting simulation to be sure
   it("should fire last vote which trigger electAllRepresentative().", async function() {
   	let blockNumber = web3.eth.blockNumber;
     let endVotingBlock = await communityElector.endVotingBlock.call();
@@ -108,9 +103,9 @@ contract('CommunityRepresentative', function (accounts) {
       blockNumber = web3.eth.blockNumber;
     }
 
-    // context where current blockcHeight is endVotingBlock - 1
+    // Context where current blockcHeight is endVotingBlock - 1
     // is when electAllRepresentative would be trigger after one last vote
-    const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[0]});
+    const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[20]});
     const eventLog = lastVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -125,115 +120,91 @@ contract('CommunityRepresentative', function (accounts) {
     );
   });
 
-  // it("should have representative accordingly to previous vote", async function () {
-  //   const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
+  it("should have representatives accordingly to previous vote where there is 10 candidates max", async function () {
+    const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
+    const undefinedIdentity = "0x0000000000000000000000000000000000000000";
 
-  //   // Print community representatives
-  //   // let representative;
-  //   // let community;
+    // Print community representatives
+    let representative;
+    let representativeCount = 0;
     
-  //   // for (let i = 0; i < 10; i++) {
-  //   // 	representative = await communityCandidate.getCandidate.call(communityRepresentatives[i]);
-  //   // 	community = representative[1];
-  //   // 	console.log("Representative - [Community] " + Object.entries(CommunityEnum)[community][0] 
-  //   // 		+ " [Pseudo] " + web3.toUtf8(representative[0])
-  //   // 		+ " [Identity] " + representative[2].valueOf());
-  //   // }
+    for (let i = 0; i < 10; i++) {
+    	representative = await communityCandidate.getCandidate.call(communityRepresentatives[i]);
 
-  // 	assert.equal(
-  //     communityRepresentatives[0].valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
-  //     "Bitcoin representative is not @aantonop"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[1].valueOf(), "0x80a140e86ce98ca848b27cd20ff5c6fbff93ee5f", 
-  //     "Ethereum representative is not @gavofyork"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[2].valueOf(), "0xd8ed8081963166baeb520db299b58272a5572bd0", 
-  //     "Filecoin representative is not @candidate7"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[3].valueOf(), "0x03573b69cc58edd544bab2992c01c281430e500d", 
-  //     "Monero representative is not @janowitz"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[4].valueOf(), "0xb6399bdb2c828420284f296d4e9cc1016ca1b5fa", 
-  //     "Doge representative is not @candidate8"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[5].valueOf(), "0xbcaba8657f375838f89145f589a68be91baffc57", 
-  //     "Cardano representative is not @candidate10"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[6].valueOf(), "0x297b785d6ad25f31a4a3e026364c868d93da26ad", 
-  //     "NEO representative is not @candidate12"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[7].valueOf(), "0x96a8ef108797af3bf7c02eb3cb4bbfeaa4dfe017", 
-  //     "Dash representative is not @candidate14"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[8].valueOf(), "0x92ae17e1824a479c549af8b2ae678d84ab8d45e0", 
-  //     "Zcash representative is not @candidate16"
-  //   );
-  // 	assert.equal(
-  //     communityRepresentatives[9].valueOf(), "0x19185471377a3652c32d480447854c164be388c0", 
-  //     "Decred representative is not @candidate18"
-  //   );
-  // });
+      if (representative[1].valueOf() != undefinedIdentity) {
+        representativeCount++;
+      }
 
-  it("should reset state of the election when the first next allowed vote is fire", async function () {
-  	let blockNumber = web3.eth.blockNumber;
-    let startVotingBlock = await communityElector.startVotingBlock.call();
-
-    while (blockNumber < startVotingBlock - 1) {
-      await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+    // 	console.log("Representative - [Pseudo] " + web3.toUtf8(representative[0]) 
+    // 		+ " [Identity] " + representative[1].valueOf()
+    // 		+ " [VoteCount] " + representative[2].toNumber());
+    // }
     }
 
-    // As a candidate
-    let candidateInfo = await communityElector.getCandidate.call(accounts[0]);
-  	assert.equal(
-      candidateInfo[3].toNumber(), 4, 
-      "Candidate should have 4 votes."
-    );
-    
-    // As an elector
-    let electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-    assert.isTrue(
-      electorsCommunityVote[0], 
-      "electorsCommunityVote[0] is false but should be true here."
-    );
-
-    // TRIGGER RESET
-    // should fire the first vote of the second voting period which trigger election reset
-    const firstVoteTx = await communityElector.electorVote(accounts[1], {from: accounts[0]});
-    const eventLog = firstVoteTx.logs[0];
-    const eventName = eventLog.event;
-    const eventArgs = eventLog.args;
-
+    // as there is only 9 candidates then we should have 9 representatives and one undefined
     assert.equal(
-      eventName, "ElectionState", 
-      "Event name is not equals to 'ElectionState'"
+      representativeCount, 9, 
+      "representativeCount should be equals to the number of registred candidate as they are < 10"
     );
-    assert.isTrue(
-      eventArgs.state, 
-      "Voting period should be open but is close."
-    );
-    // END TRIGGER RESET
-
-	  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
-  	assert.equal(
-      candidateInfo[3].toNumber(), 0,
-      "Candidate should have 0 vote."
-    );
-
-    electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
-    assert.isFalse(
-      electorsCommunityVote[0], 
-      "electorsCommunityVote[0] is false but should be true here."
+    const lastRepresentative = await communityCandidate.getCandidate.call(communityRepresentatives[9])
+    assert.equal(
+      lastRepresentative[1].valueOf(), undefinedIdentity, 
+      "The last representative identity should be undefined with default address(0)"
     );
   });
+
+  // it("should reset state of the election when the first next allowed vote is fire", async function () {
+  // 	let blockNumber = web3.eth.blockNumber;
+  //   let startVotingBlock = await communityElector.startVotingBlock.call();
+
+  //   while (blockNumber < startVotingBlock - 1) {
+  //     await helper.mineBlock();
+  //     blockNumber = web3.eth.blockNumber;
+  //   }
+
+  //   // As a candidate
+  //   let candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  // 	assert.equal(
+  //     candidateInfo[3].toNumber(), 4, 
+  //     "Candidate should have 4 votes."
+  //   );
+    
+  //   // As an elector
+  //   let electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
+  //   assert.isTrue(
+  //     electorsCommunityVote[0], 
+  //     "electorsCommunityVote[0] is false but should be true here."
+  //   );
+
+  //   // TRIGGER RESET
+  //   // should fire the first vote of the second voting period which trigger election reset
+  //   const firstVoteTx = await communityElector.electorVote(accounts[1], {from: accounts[0]});
+  //   const eventLog = firstVoteTx.logs[0];
+  //   const eventName = eventLog.event;
+  //   const eventArgs = eventLog.args;
+
+  //   assert.equal(
+  //     eventName, "ElectionState", 
+  //     "Event name is not equals to 'ElectionState'"
+  //   );
+  //   assert.isTrue(
+  //     eventArgs.state, 
+  //     "Voting period should be open but is close."
+  //   );
+  //   // END TRIGGER RESET
+
+	 //  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+  // 	assert.equal(
+  //     candidateInfo[3].toNumber(), 0,
+  //     "Candidate should have 0 vote."
+  //   );
+
+  //   electorsCommunityVote = await communityElector.getElectorCommunityVote.call(accounts[0]);
+  //   assert.isFalse(
+  //     electorsCommunityVote[0], 
+  //     "electorsCommunityVote[0] is false but should be true here."
+  //   );
+  // });
 
 });
 
