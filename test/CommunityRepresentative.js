@@ -188,7 +188,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     // TRIGGER RESET
     // should fire the first vote of the second voting period which trigger election reset
-    const firstVoteTx = await communityElector.electorVote(accounts[0], {from: accounts[0]});
+    const firstVoteTx = await communityElector.electorVote(accounts[5], {from: accounts[0]});
     const eventLog = firstVoteTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -203,7 +203,7 @@ contract('CommunityRepresentative', function (accounts) {
     );
     // END TRIGGER RESET
 
-	  candidateInfo = await communityElector.getCandidate.call(accounts[0]);
+	  candidateInfo = await communityElector.getCandidate.call(accounts[5]);
   	assert.equal(
       candidateInfo[2].toNumber(), 1,
       "Candidate should have 1 vote."
@@ -224,12 +224,7 @@ contract('CommunityRepresentative', function (accounts) {
 
   // SECOND ELECTION WITH MORE THAN > 10 candidates
   it("should vote amongst the 20 candidates and fire last vote which trigger electAllRepresentative().", async function() {
-    // await helper.printVotingBlock(web3, communityElector);
     await helper.electionVoteMockup2(communityElector, accounts);
-    // await helper.printVotingBlock(web3, communityElector);
-    // currentBlock : 328
-    // startVotingBlock : 291
-    // endVotingBlock : 331
 
     let blockNumber = web3.eth.blockNumber;
     let endVotingBlock = await communityElector.endVotingBlock.call();
@@ -244,8 +239,6 @@ contract('CommunityRepresentative', function (accounts) {
       await helper.mineBlock();
       blockNumber = web3.eth.blockNumber;
     }
-
-    await helper.printVotingBlock(web3, communityElector);
 
     // Context where current blockcHeight is endVotingBlock - 1
     // is when electAllRepresentative would be trigger after one last vote
@@ -262,10 +255,51 @@ contract('CommunityRepresentative', function (accounts) {
       eventArgs.state, 
       "Voting period should be close but is open."
     );
-
-    const arrayTest = await communityRepresentative.getArray.call();
-    console.log(arrayTest);
   });
+  it("should have representatives accordingly to previous vote where there is more than 10 candidates", async function () {
+    const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
+
+    assert.equal(
+      communityRepresentatives[0].valueOf(), "0x440348997da5130d491864c23de26639706d488f",
+      "Decred representative is not @candidate9"
+    );
+    assert.equal(
+      communityRepresentatives[1].valueOf(), "0x502c07e176820a19c5aaa57e4a0dbddfa1182791",
+      "Decred representative is not @candidate4"
+    );
+    assert.equal(
+      communityRepresentatives[2].valueOf(), "0xb66761118c38062efce94ed524a41ce61e8d9e36",
+      "Decred representative is not @candidate2"
+    );
+    assert.equal(
+      communityRepresentatives[3].valueOf(), "0x92ae17e1824a479c549af8b2ae678d84ab8d45e0",
+      "Decred representative is not @candidate16"
+    );
+    assert.equal(
+      communityRepresentatives[4].valueOf(), "0x5f6f21faa62889f0d5bea2f20dd63cc759c0d4a7",
+      "Decred representative is not @candidate15"
+    );
+    assert.equal(
+      communityRepresentatives[5].valueOf(), "0xb6399bdb2c828420284f296d4e9cc1016ca1b5fa",
+      "Decred representative is not @candidate8"
+    );
+    assert.equal(
+      communityRepresentatives[6].valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1",
+      "Decred representative is not @candidate0"
+    );
+    assert.equal(
+      communityRepresentatives[7].valueOf(), "0xff52bf651264c32fb8491e6d9fbdcbe22a2f98e6",
+      "Decred representative is not @candidate11"
+    );
+    assert.equal(
+      communityRepresentatives[8].valueOf(), "0x03573b69cc58edd544bab2992c01c281430e500d",
+      "Decred representative is not @candidate6"
+    );
+    assert.equal(
+      communityRepresentatives[9].valueOf(), "0x80a140e86ce98ca848b27cd20ff5c6fbff93ee5f",
+      "Decred representative is not @candidate5"
+    );
+  })
 });
 
 // https://ethereum.stackexchange.com/questions/18660/batch-transactions-for-metamask-using-sendasync
