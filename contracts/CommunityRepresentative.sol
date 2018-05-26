@@ -1,6 +1,7 @@
 pragma solidity ^0.4.23;
 pragma experimental ABIEncoderV2;
 
+import "./Array256Lib.sol";
 import "./CommunityLib.sol";
 
 // CommunityCandidate interface / ABI
@@ -11,6 +12,9 @@ contract CommunityCandidateInterface {
 }
 
 contract CommunityRepresentative {
+    using Array256Lib for uint256[];
+    uint256[] public array;
+
 	address constant candidateDeleted = address(0);
 	
 	CommunityCandidateInterface public communityCandidate;
@@ -46,11 +50,8 @@ contract CommunityRepresentative {
         return representatives;
     }
 
-	function electAllRepresentative() public onlyCommunityElector {
-        CommunityLib.Representative[10] memory representativesTmp;
-        
-        CommunityLib.Candidate memory communityRepresentativeTmp;
-        uint communityTmp;
+	function electAllRepresentative() public onlyCommunityElector {        
+        CommunityLib.Candidate memory candidateTmp;
 
         uint candidatesCount = communityCandidate.getCandidatesCount();
 		address[] memory candidatesIdx = communityCandidate.getCandidatesIdx();
@@ -60,16 +61,30 @@ contract CommunityRepresentative {
             // each candidatesIdx's value equals to candidateDeleted means that the candidate is not one anymore.
             for(uint i = 0; i < candidatesIdx.length; i++) {
                 if (candidatesIdx[i] != candidateDeleted) {
-                    communityRepresentativeTmp = communityCandidate.getCandidate(candidatesIdx[i]);
-                    representatives[currentRepresentativeIdx] = communityRepresentativeTmp.identity;
+                    candidateTmp = communityCandidate.getCandidate(candidatesIdx[i]);
+                    representatives[currentRepresentativeIdx] = candidateTmp.identity;
                     currentRepresentativeIdx++;
                 }
             }
-        }
-        //  else {
-        //     // LOGIC
-        // }
+        } 
+        else {
+            CommunityLib.Representative[50] memory adapterCandidateVoteCount;
+            uint256[] voteCountAsId;
 
+            for(uint j = 0; j < candidatesIdx.length; j++) {
+                if (candidatesIdx[j] != candidateDeleted) {
+                    candidateTmp = communityCandidate.getCandidate(candidatesIdx[j]);
+
+                    adapterCandidateVoteCount[j] = CommunityLib.Representative(candidateTmp.identity, candidateTmp.voteCount);
+                    // array.push(candidateTmp.voteCount);
+                    voteCountAsId.push(candidateTmp.voteCount);
+                }
+            }
+
+            voteCountAsId.heapSort();
+
+            array = voteCountAsId;
+        }
 	    // // each candidatesIdx's value equals to candidateDeleted means that the candidate is not one anymore.
 	    // for(uint i = 0; i < candidatesIdx.length; i++) {
      //    	if (candidatesIdx[i] != candidateDeleted) {
@@ -88,6 +103,10 @@ contract CommunityRepresentative {
      //        representatives[j] = representativesTmp[j].identity;
      //    }
 	}
+
+    function getArray() public view returns(uint256[]) {
+        return array;
+    }
 }
 
 // https://ethereum.stackexchange.com/questions/1517/sorting-an-array-of-integer-with-ethereum/20996#20996

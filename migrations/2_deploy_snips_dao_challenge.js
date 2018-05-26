@@ -1,3 +1,4 @@
+const Array256Lib = artifacts.require("./Array256Lib.sol");
 const CommunityCandidate = artifacts.require("./CommunityCandidate.sol");
 const CommunityElector = artifacts.require("./CommunityElector.sol");
 const CommunityRepresentative = artifacts.require("./CommunityRepresentative.sol");
@@ -9,6 +10,10 @@ module.exports = function(deployer) {
 	* passing in CommunityCandidate's newly deployed address 
 	*/
 	deployer.then(async function() {
+		await deployer.deploy(Array256Lib);
+		await deployer.link(Array256Lib, CommunityRepresentative);
+
+
 		const CommunityCandidateInstance = await deployer.deploy(CommunityCandidate);
 		
 		const CommunityRepresentativeInstance = await deployer.deploy(

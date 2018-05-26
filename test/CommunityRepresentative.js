@@ -224,39 +224,47 @@ contract('CommunityRepresentative', function (accounts) {
 
   // SECOND ELECTION WITH MORE THAN > 10 candidates
   it("should vote amongst the 20 candidates and fire last vote which trigger electAllRepresentative().", async function() {
-    await helper.printVotingBlock(web3, communityElector);
+    // await helper.printVotingBlock(web3, communityElector);
     await helper.electionVoteMockup2(communityElector, accounts);
+    // await helper.printVotingBlock(web3, communityElector);
+    // currentBlock : 328
+    // startVotingBlock : 291
+    // endVotingBlock : 331
+
+    let blockNumber = web3.eth.blockNumber;
+    let endVotingBlock = await communityElector.endVotingBlock.call();
+
+    // makes sure lastVote has not been fire yet
+    assert.isBelow(
+      blockNumber, endVotingBlock.toNumber(), 
+      "blockNumber is not strictly below to endVotingBlock."
+    );
+
+    while (blockNumber < endVotingBlock - 1) {
+      await helper.mineBlock();
+      blockNumber = web3.eth.blockNumber;
+    }
+
     await helper.printVotingBlock(web3, communityElector);
 
-    // let blockNumber = web3.eth.blockNumber;
-    // let endVotingBlock = await communityElector.endVotingBlock.call();
+    // Context where current blockcHeight is endVotingBlock - 1
+    // is when electAllRepresentative would be trigger after one last vote
+    const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[38]});
+    const eventLog = lastVoteTx.logs[0];
+    const eventName = eventLog.event;
+    const eventArgs = eventLog.args;
 
-    // // makes sure lastVote has not been fire yet
-    // assert.isBelow(
-    //   blockNumber, endVotingBlock.toNumber(), 
-    //   "blockNumber is not strictly below to endVotingBlock."
-    // );
+    assert.equal(
+      eventName, "ElectionState", 
+      "Event name is not equals to 'ElectionState'"
+    );
+    assert.isFalse(
+      eventArgs.state, 
+      "Voting period should be close but is open."
+    );
 
-    // while (blockNumber < endVotingBlock - 1) {
-    //   await helper.mineBlock();
-    //   blockNumber = web3.eth.blockNumber;
-    // }
-
-    // // Context where current blockcHeight is endVotingBlock - 1
-    // // is when electAllRepresentative would be trigger after one last vote
-    // const lastVoteTx = await communityElector.electorVote(accounts[6], {from: accounts[20]});
-    // const eventLog = lastVoteTx.logs[0];
-    // const eventName = eventLog.event;
-    // const eventArgs = eventLog.args;
-
-    // assert.equal(
-    //   eventName, "ElectionState", 
-    //   "Event name is not equals to 'ElectionState'"
-    // );
-    // assert.isFalse(
-    //   eventArgs.state, 
-    //   "Voting period should be close but is open."
-    // );
+    const arrayTest = await communityRepresentative.getArray.call();
+    console.log(arrayTest);
   });
 });
 

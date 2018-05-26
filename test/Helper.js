@@ -109,7 +109,10 @@ module.exports = {
 	  	await communityElector.electorVote(accounts[9], {from: accounts[35]});
 	  	await communityElector.electorVote(accounts[9], {from: accounts[36]});
 	  	await communityElector.electorVote(accounts[2], {from: accounts[37]});
-	  	// await communityElector.electorVote(accounts[6], {from: accounts[38]});
 	  	// await communityElector.electorVote(accounts[8], {from: accounts[39]});
 	}
 };
+
+// https://ethereum.stackexchange.com/questions/1517/sorting-an-array-of-integer-with-ethereum/20996#20996
+// https://medium.com/modular-network/circular-linked-list-in-solidity-41ee6d1d0056
+// https://github.com/Modular-Network/ethereum-libraries/tree/master/ArrayUtilsLib
