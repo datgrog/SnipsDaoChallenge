@@ -13,7 +13,7 @@ contract CommunityCandidateInterface {
 
 contract CommunityRepresentative {
     using Array256Lib for uint256[];
-    uint256[] public array;
+    uint256[] voteCountAsId;
 
 	address constant candidateDeleted = address(0);
 	
@@ -50,6 +50,10 @@ contract CommunityRepresentative {
         return representatives;
     }
 
+    function getvoteCountAsId() public view returns(uint256[]) {
+        return voteCountAsId;
+    }
+
 	function electAllRepresentative() public onlyCommunityElector {        
         CommunityLib.Candidate memory candidateTmp;
 
@@ -68,45 +72,35 @@ contract CommunityRepresentative {
             }
         } 
         else {
-            CommunityLib.Representative[50] memory adapterCandidateVoteCount;
-            uint256[] voteCountAsId;
+            CommunityLib.Representative[] memory adapterCandidateVoteCount = new CommunityLib.Representative[](candidatesCount);
+            voteCountAsId = new uint256[](candidatesCount);
 
             for(uint j = 0; j < candidatesIdx.length; j++) {
                 if (candidatesIdx[j] != candidateDeleted) {
                     candidateTmp = communityCandidate.getCandidate(candidatesIdx[j]);
 
                     adapterCandidateVoteCount[j] = CommunityLib.Representative(candidateTmp.identity, candidateTmp.voteCount);
-                    // array.push(candidateTmp.voteCount);
-                    voteCountAsId.push(candidateTmp.voteCount);
+                    voteCountAsId[j] = candidateTmp.voteCount;
                 }
             }
 
             voteCountAsId.heapSort();
 
-            array = voteCountAsId;
+            // As the library could not sort a struct array given a specific key as an uint
+            // then we had to find the identity given related to a vote which is not consistent.
+            uint representativesIdx;
+            for(uint voteIdx = voteCountAsId.length - 1; voteIdx >= voteCountAsId.length - 10; voteIdx--) {
+                for(uint adapterCandidateVoteCountIdx = 0; adapterCandidateVoteCountIdx < adapterCandidateVoteCount.length; adapterCandidateVoteCountIdx++) {
+                    if (voteCountAsId[voteIdx] == adapterCandidateVoteCount[adapterCandidateVoteCountIdx].voteCount && voteCountAsId[voteIdx] != 0) {
+                        representativesIdx = voteIdx - voteCountAsId.length + 10;
+                        representatives[representativesIdx] = adapterCandidateVoteCount[adapterCandidateVoteCountIdx].identity;
+                        delete adapterCandidateVoteCount[adapterCandidateVoteCountIdx].voteCount;
+                        break;
+                    }
+                }
+            }
         }
-	    // // each candidatesIdx's value equals to candidateDeleted means that the candidate is not one anymore.
-	    // for(uint i = 0; i < candidatesIdx.length; i++) {
-     //    	if (candidatesIdx[i] != candidateDeleted) {
-     //            communityRepresentativeTmp = communityCandidate.getCandidate(candidatesIdx[i]);
-     //            communityTmp = uint(communityRepresentativeTmp.community);
-
-     //            if (communityRepresentativeTmp.voteCount > representativesTmp[communityTmp].voteCount) {
-     //                representativesTmp[communityTmp].identity = communityRepresentativeTmp.identity;
-     //                representativesTmp[communityTmp].voteCount = communityRepresentativeTmp.voteCount;
-     //            }
-     //    	}
-    	// }
-
-     //    // 4 enum length
-     //    for (uint j = 0; j < 10; j++) {
-     //        representatives[j] = representativesTmp[j].identity;
-     //    }
 	}
-
-    function getArray() public view returns(uint256[]) {
-        return array;
-    }
 }
 
 // https://ethereum.stackexchange.com/questions/1517/sorting-an-array-of-integer-with-ethereum/20996#20996

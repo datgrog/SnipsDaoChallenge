@@ -78,13 +78,13 @@ module.exports = {
 	  	await communityElector.electorVote(accounts[6], {from: accounts[6]});
 	  	await communityElector.electorVote(accounts[7], {from: accounts[7]});
 	  	await communityElector.electorVote(accounts[8], {from: accounts[8]});
-	  	await communityElector.electorVote(accounts[0], {from: accounts[9]});
+	  	await communityElector.electorVote(accounts[6], {from: accounts[9]});
 	  	await communityElector.electorVote(accounts[0], {from: accounts[10]});
 	  	await communityElector.electorVote(accounts[0], {from: accounts[11]});
-	  	await communityElector.electorVote(accounts[1], {from: accounts[12]});
-	  	await communityElector.electorVote(accounts[1], {from: accounts[13]});
-	  	await communityElector.electorVote(accounts[1], {from: accounts[14]});
-	  	await communityElector.electorVote(accounts[1], {from: accounts[15]});
+	  	await communityElector.electorVote(accounts[15], {from: accounts[12]});
+	  	await communityElector.electorVote(accounts[15], {from: accounts[13]});
+	  	await communityElector.electorVote(accounts[15], {from: accounts[14]});
+	  	await communityElector.electorVote(accounts[5], {from: accounts[15]});
 	  	await communityElector.electorVote(accounts[4], {from: accounts[16]});
 	  	await communityElector.electorVote(accounts[5], {from: accounts[17]});
 	  	await communityElector.electorVote(accounts[6], {from: accounts[18]});
