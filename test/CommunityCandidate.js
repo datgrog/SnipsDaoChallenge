@@ -1,11 +1,13 @@
 const CommunityCandidate = artifacts.require("CommunityCandidate");
+const utf8ToHex = web3.utils.utf8ToHex;
+const hexToUtf8 = web3.utils.hexToUtf8;
+
 
 // Ganache GUI keeps same wallet which is more convenient for testing
 // MNEMONIC onion tape alien arctic brush claim verb panther panic issue domain away
 // HD PATH m/44'/60'/0'/0/account_index
 
 contract('CommunityCandidate', function (accounts) {
-
   const account0 = accounts[0];
   const account1 = accounts[1];
 
@@ -42,27 +44,40 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have no candidate", async function () {
-  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
+    const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(
+    assert.equal(
       candidatesCount.valueOf(), 0, 
       "candidatesCount is different than 0"
     );
   });
   
   it("should register a candidate", async function () {
-  	await communityCandidate.registerCandidate("@aantonop", {from: account0});
-  	
-  	const candidate = {};
-  	[candidate.pseudo, candidate.identity, candidate.voteCount] = await communityCandidate.getCandidate.call(account0);
-  	
-  	assert.equal(
-      web3.toUtf8(candidate.pseudo), "@aantonop", 
+    await communityCandidate.registerCandidate(utf8ToHex("@aantonop"), {from: account0});
+
+    const candidate = {};
+
+    // Result {
+    //   '0':
+    //   '0x4061616e746f6e6f700000000000000000000000000000000000000000000000',
+    //   '1': '0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1',
+    //   '2':
+    //   BN {
+    //     negative: 0,
+    //     words: [ 0, <1 empty item> ],
+    //     length: 1,
+    //     red: null
+    //   }
+    // }
+    ({0: candidate.pseudo, 1: candidate.identity, 2: candidate.voteCount} = await communityCandidate.getCandidate.call(account0));
+
+    assert.equal(
+      hexToUtf8(candidate.pseudo), "@aantonop",
       "candidate.pseudo is different than '@aantonop'"
     );
-  	assert.equal(
-      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
-      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+    assert.equal(
+      candidate.identity.valueOf(), "0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1",
+      "candidate.identity is different than 0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1"
     );
     assert.equal(
       candidate.voteCount.toNumber(), 0, 
@@ -71,13 +86,13 @@ contract('CommunityCandidate', function (accounts) {
   });
 
   it("should have one candidate", async function () {
-  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
+    const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
+    assert.equal(candidatesCount.valueOf(), 1, "candidatesCount is different than 1");
   });
 
   it("should check CandidateRegistered event by register another candidate", async function () {
-  	const registerCandidateTx = await communityCandidate.registerCandidate("@VitalikButerin", {from: account1});
+    const registerCandidateTx = await communityCandidate.registerCandidate(utf8ToHex("@VitalikButerin"), {from: account1});
     const eventLog = registerCandidateTx.logs[0];
     const eventName = eventLog.event;
     const eventArgs = eventLog.args;
@@ -87,50 +102,50 @@ contract('CommunityCandidate', function (accounts) {
       "Event name is not equals to 'CandidateRegistered'"
     );
     assert.equal(
-      eventArgs.identity.valueOf(), "0x1df7e4d6f021cff30b62eff03552fdbddc9fddac", 
-      "eventArgs.identity is different than 0x1df7e4d6f021cff30b62eff03552fdbddc9fddac"
+      eventArgs.identity.valueOf(), "0x1df7E4d6F021CFF30B62EfF03552fdbDdc9FddAc", 
+      "eventArgs.identity is different than 0x1df7E4d6F021CFF30B62EfF03552fdbDdc9FddAc"
     );
   });
 
   it("should have two candidates", async function () {
-  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
+    const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(
+    assert.equal(
       candidatesCount.valueOf(), 2, 
       "candidatesCount is different than 2"
     );
   });
 
   it("should deregistered a candidate given the eth account the request came from", async function () {
-  	const candidateToDelIdentity = web3.eth.accounts[1];
+    const candidateToDelIdentity = account1;
 
-  	let candidatesIdx = await communityCandidate.getCandidatesIdx();
-  	let candidateToDelIdx = -1;
+    let candidatesIdx = await communityCandidate.getCandidatesIdx();
+    let candidateToDelIdx = -1;
 
-  	Object.entries(candidatesIdx).forEach(([key, value]) => {
-  		if (candidateToDelIdentity === value ) {
-  			candidateToDelIdx = key;
-  		}
-  	});
+    Object.entries(candidatesIdx).forEach(([key, value]) => {
+      if (candidateToDelIdentity === value ) {
+        candidateToDelIdx = key;
+      }
+    });
 
-  	if (candidateToDelIdx === -1) { 
-  		throw new Error("The candidate to delete should be the one inserted prev so we should find his identity within candidatesIdx!") 
-  	}
+    if (candidateToDelIdx === -1) { 
+      throw new Error("The candidate to delete should be the one inserted prev so we should find his identity within candidatesIdx!") 
+    }
 
-  	await communityCandidate.deregisterCandidate({from: candidateToDelIdentity});
+    await communityCandidate.deregisterCandidate({from: candidateToDelIdentity});
 
-	  candidatesIdx = await communityCandidate.getCandidatesIdx();
+    candidatesIdx = await communityCandidate.getCandidatesIdx();
 
-  	assert.equal(
+    assert.equal(
       candidatesIdx[candidateToDelIdx].valueOf(), "0x0000000000000000000000000000000000000000", 
       "Deregister candidateIdx should have default address(0)"
     );
   });
 
   it("should have one candidate", async function () {
-  	const candidatesCount = await communityCandidate.getCandidatesCount.call();
+    const candidatesCount = await communityCandidate.getCandidatesCount.call();
 
-	  assert.equal(
+    assert.equal(
       candidatesCount.valueOf(), 1, 
       "candidatesCount is different than 1"
     );
