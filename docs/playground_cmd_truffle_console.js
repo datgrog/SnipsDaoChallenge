@@ -5,20 +5,20 @@ curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"evm_mine","params
 curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"miner_start","params":[]}'
 curl localhost:7545 -X POST --data '{"jsonrpc":"2.0","method":"miner_stop","params":[]}'
 
-
-
 // Playing with CommunityCandidate contract
-account0 = web3.eth.accounts[0];
-account1 = web3.eth.accounts[1];
-account2 = web3.eth.accounts[2];
-account3 = web3.eth.accounts[3];
+account0 = accounts[0];
+account1 = accounts[1];
+account2 = accounts[2];
+account3 = accounts[3];
+
+const utf8ToHex = web3.utils.utf8ToHex;
 
 CommunityCandidate.deployed().then(inst => { CommunityCandidateInstance = inst });
 
-CommunityCandidateInstance.registerCandidate("grog", 0, {from: account0});
-CommunityCandidateInstance.registerCandidate("groguette", 1, {from: account1});
-CommunityCandidateInstance.registerCandidate("grogzator", 2, {from: account2});
-CommunityCandidateInstance.registerCandidate("grogzy", 3, {from: account3});
+CommunityCandidateInstance.registerCandidate(utf8ToHex("grog"), {from: account0});
+CommunityCandidateInstance.registerCandidate(utf8ToHex("groguette"), {from: account1});
+CommunityCandidateInstance.registerCandidate(utf8ToHex("grogzator"), {from: account2});
+CommunityCandidateInstance.registerCandidate(utf8ToHex("grogzy"), {from: account3});
 
 CommunityCandidateInstance.deregisterCandidate({from: account1});
 
