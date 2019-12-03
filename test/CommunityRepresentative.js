@@ -1,4 +1,6 @@
 const helper = require("./Helper.js");
+const utf8ToHex = web3.utils.utf8ToHex;
+const hexToUtf8 = web3.utils.hexToUtf8;
 
 const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
@@ -58,7 +60,7 @@ contract('CommunityRepresentative', function (accounts) {
   });
 
   it("INIT : should votes, until before last vote.", async function() {
-  	let blockNumber = web3.eth.blockNumber;
+  	let blockNumber = await web3.eth.getBlockNumber();
     let startVotingBlock = await communityElector.startVotingBlock.call();
     let endVotingBlock = await communityElector.endVotingBlock.call();
 
@@ -66,7 +68,7 @@ contract('CommunityRepresentative', function (accounts) {
     // and the (block.number >= endVotingBlock && isElectionOpen) condition
     while (blockNumber < startVotingBlock - 1) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
     
     // People register as candidate of course 
@@ -89,7 +91,7 @@ contract('CommunityRepresentative', function (accounts) {
   });
 
   it("should fire last vote which trigger electAllRepresentative().", async function() {
-  	let blockNumber = web3.eth.blockNumber;
+  	let blockNumber = await web3.eth.getBlockNumber();
     let endVotingBlock = await communityElector.endVotingBlock.call();
 
   	// makes sure lastVote has not been fire yet
@@ -100,7 +102,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     while (blockNumber < endVotingBlock - 1) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
 
     // Context where current blockcHeight is endVotingBlock - 1
@@ -164,12 +166,12 @@ contract('CommunityRepresentative', function (accounts) {
   })
 
   it("should reset state of the election when the first next allowed vote is fire", async function () {
-  	let blockNumber = web3.eth.blockNumber;
+  	let blockNumber = await web3.eth.getBlockNumber();
     let startVotingBlock = await communityElector.startVotingBlock.call();
 
     while (blockNumber < startVotingBlock - 1) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
 
     // As a candidate
@@ -226,7 +228,7 @@ contract('CommunityRepresentative', function (accounts) {
   it("should vote amongst the 20 candidates and fire last vote which trigger electAllRepresentative().", async function() {
     await helper.electionVoteMockup2(communityElector, accounts);
 
-    let blockNumber = web3.eth.blockNumber;
+    let blockNumber = await web3.eth.getBlockNumber();
     let endVotingBlock = await communityElector.endVotingBlock.call();
 
     // makes sure lastVote has not been fire yet
@@ -237,7 +239,7 @@ contract('CommunityRepresentative', function (accounts) {
 
     while (blockNumber < endVotingBlock - 1) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
 
     // Context where current blockcHeight is endVotingBlock - 1
@@ -260,43 +262,43 @@ contract('CommunityRepresentative', function (accounts) {
     const communityRepresentatives = await communityRepresentative.getCommunityRepresentative();
 
     assert.equal(
-      communityRepresentatives[0].valueOf(), "0x440348997da5130d491864c23de26639706d488f",
+      communityRepresentatives[0].valueOf(), "0x440348997Da5130d491864c23DE26639706d488f",
       "Decred representative is not @candidate9"
     );
     assert.equal(
-      communityRepresentatives[1].valueOf(), "0x502c07e176820a19c5aaa57e4a0dbddfa1182791",
+      communityRepresentatives[1].valueOf(), "0x502C07E176820A19c5AAa57e4a0DbDDFA1182791",
       "Decred representative is not @candidate4"
     );
     assert.equal(
-      communityRepresentatives[2].valueOf(), "0xb66761118c38062efce94ed524a41ce61e8d9e36",
+      communityRepresentatives[2].valueOf(), "0xB66761118C38062efce94ed524a41Ce61E8D9e36",
       "Decred representative is not @candidate2"
     );
     assert.equal(
-      communityRepresentatives[3].valueOf(), "0x92ae17e1824a479c549af8b2ae678d84ab8d45e0",
+      communityRepresentatives[3].valueOf(), "0x92AE17e1824a479C549AF8B2ae678d84aB8D45E0",
       "Decred representative is not @candidate16"
     );
     assert.equal(
-      communityRepresentatives[4].valueOf(), "0x5f6f21faa62889f0d5bea2f20dd63cc759c0d4a7",
+      communityRepresentatives[4].valueOf(), "0x5f6f21faa62889F0D5BEA2f20dd63cC759c0d4A7",
       "Decred representative is not @candidate15"
     );
     assert.equal(
-      communityRepresentatives[5].valueOf(), "0xb6399bdb2c828420284f296d4e9cc1016ca1b5fa",
+      communityRepresentatives[5].valueOf(), "0xB6399Bdb2C828420284F296d4E9cc1016ca1B5Fa",
       "Decred representative is not @candidate8"
     );
     assert.equal(
-      communityRepresentatives[6].valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1",
+      communityRepresentatives[6].valueOf(), "0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1",
       "Decred representative is not @candidate0"
     );
     assert.equal(
-      communityRepresentatives[7].valueOf(), "0xff52bf651264c32fb8491e6d9fbdcbe22a2f98e6",
+      communityRepresentatives[7].valueOf(), "0xFf52Bf651264C32fB8491e6d9fbdCbe22A2F98e6",
       "Decred representative is not @candidate11"
     );
     assert.equal(
-      communityRepresentatives[8].valueOf(), "0x03573b69cc58edd544bab2992c01c281430e500d",
+      communityRepresentatives[8].valueOf(), "0x03573B69cC58Edd544baB2992c01c281430e500D",
       "Decred representative is not @candidate6"
     );
     assert.equal(
-      communityRepresentatives[9].valueOf(), "0x80a140e86ce98ca848b27cd20ff5c6fbff93ee5f",
+      communityRepresentatives[9].valueOf(), "0x80A140E86cE98CA848b27Cd20FF5C6FbfF93EE5F",
       "Decred representative is not @candidate5"
     );
   })

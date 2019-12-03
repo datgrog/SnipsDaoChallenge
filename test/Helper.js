@@ -1,3 +1,6 @@
+const utf8ToHex = web3.utils.utf8ToHex;
+const hexToUtf8 = web3.utils.hexToUtf8;
+
 module.exports = {
 	mineBlock: function () {
   		return new Promise((resolve, reject) => {
@@ -21,28 +24,28 @@ module.exports = {
 	    console.log("endVotingBlock : " + endVotingBlock.toNumber());
 	},
 	register9Candidates: async function(communityCandidate, accounts) {
-		await communityCandidate.registerCandidate("@candidate0", {from: accounts[0]});
-	  	await communityCandidate.registerCandidate("@candidate1", {from: accounts[1]});
-	  	await communityCandidate.registerCandidate("@candidate2", {from: accounts[2]});
-	  	await communityCandidate.registerCandidate("@candidate3", {from: accounts[3]});
-	  	await communityCandidate.registerCandidate("@candidate4", {from: accounts[4]});
-	  	await communityCandidate.registerCandidate("@candidate5", {from: accounts[5]});
-	  	await communityCandidate.registerCandidate("@candidate6", {from: accounts[6]});
-	  	await communityCandidate.registerCandidate("@candidate7", {from: accounts[7]});
-	  	await communityCandidate.registerCandidate("@candidate8", {from: accounts[8]});
+		await communityCandidate.registerCandidate(utf8ToHex("@candidate0"), {from: accounts[0]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate1"), {from: accounts[1]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate2"), {from: accounts[2]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate3"), {from: accounts[3]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate4"), {from: accounts[4]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate5"), {from: accounts[5]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate6"), {from: accounts[6]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate7"), {from: accounts[7]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate8"), {from: accounts[8]});
 	},
 	register11Candidates: async function(communityCandidate, accounts) {
-	  	await communityCandidate.registerCandidate("@candidate9", {from: accounts[9]});
-	  	await communityCandidate.registerCandidate("@candidate10", {from: accounts[10]});
-	  	await communityCandidate.registerCandidate("@candidate11", {from: accounts[11]});
-	  	await communityCandidate.registerCandidate("@candidate12", {from: accounts[12]});
-	  	await communityCandidate.registerCandidate("@candidate13", {from: accounts[13]});
-	  	await communityCandidate.registerCandidate("@candidate14", {from: accounts[14]});
-	  	await communityCandidate.registerCandidate("@candidate15", {from: accounts[15]});
-	  	await communityCandidate.registerCandidate("@candidate16", {from: accounts[16]});
-	  	await communityCandidate.registerCandidate("@candidate17", {from: accounts[17]});
-	  	await communityCandidate.registerCandidate("@candidate18", {from: accounts[18]});
-	  	await communityCandidate.registerCandidate("@candidate19", {from: accounts[19]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate9"), {from: accounts[9]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate10"), {from: accounts[10]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate11"), {from: accounts[11]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate12"), {from: accounts[12]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate13"), {from: accounts[13]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate14"), {from: accounts[14]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate15"), {from: accounts[15]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate16"), {from: accounts[16]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate17"), {from: accounts[17]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate18"), {from: accounts[18]});
+	  	await communityCandidate.registerCandidate(utf8ToHex("@candidate19"), {from: accounts[19]});
 	},
 	electionVoteMockup1: async function (communityElector, accounts) {
 		// each candidate vote for themself => 9 votes
