@@ -55,21 +55,9 @@ contract('CommunityCandidate', function (accounts) {
   it("should register a candidate", async function () {
     await communityCandidate.registerCandidate(utf8ToHex("@aantonop"), {from: account0});
 
-    const candidate = {};
-
-    // Result {
-    //   '0':
-    //   '0x4061616e746f6e6f700000000000000000000000000000000000000000000000',
-    //   '1': '0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1',
-    //   '2':
-    //   BN {
-    //     negative: 0,
-    //     words: [ 0, <1 empty item> ],
-    //     length: 1,
-    //     red: null
-    //   }
-    // }
-    ({0: candidate.pseudo, 1: candidate.identity, 2: candidate.voteCount} = await communityCandidate.getCandidate.call(account0));
+    // ({0: candidate.pseudo, 1: candidate.identity, 2: candidate.voteCount} = await communityCandidate.getCandidate.call(account0));
+    const candidate_res = await communityCandidate.getCandidate.call(account0);
+    const candidate = { 'pseudo': candidate_res['0'], 'identity': candidate_res['1'], 'voteCount': candidate_res['2']};
 
     assert.equal(
       hexToUtf8(candidate.pseudo), "@aantonop",

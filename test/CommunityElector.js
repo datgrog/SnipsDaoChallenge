@@ -1,4 +1,6 @@
 const helper = require("./Helper.js");
+const utf8ToHex = web3.utils.utf8ToHex;
+const hexToUtf8 = web3.utils.hexToUtf8;
 
 const CommunityCandidate = artifacts.require("CommunityCandidate");
 const CommunityElector = artifacts.require("CommunityElector");
@@ -44,8 +46,8 @@ contract('CommunityElector', function (accounts) {
   	*/
   		
   	const BlocksOrTxsBeforeTestExecution = 3;
-  	const blockNumber = web3.eth.blockNumber - BlocksOrTxsBeforeTestExecution;
-  		
+  	const blockNumber = await web3.eth.getBlockNumber() - BlocksOrTxsBeforeTestExecution;
+
   	// it takes 3 blocks to setup test env, as a dayInBlock is 5760 in prod but 40 in test, we should find 33
   	assert.equal(
       startVotingBlock.toNumber(), blockNumber + dayInBlock, 
@@ -69,18 +71,18 @@ contract('CommunityElector', function (accounts) {
   	* even if we could find a workaround to access CommunityCandidate previously tested.
   	*/
 
-	  await communityCandidate.registerCandidate("@aantonop", {from: account0});
+	  await communityCandidate.registerCandidate(utf8ToHex("@aantonop"), {from: account0});
   	
-    const candidate = {};
-    [candidate.pseudo, candidate.identity, candidate.voteCount] = await communityCandidate.getCandidate.call(account0);
-    
+    const candidate_res = await communityCandidate.getCandidate.call(account0);
+    const candidate = { 'pseudo': candidate_res['0'], 'identity': candidate_res['1'], 'voteCount': candidate_res['2']};
+
     assert.equal(
-      web3.toUtf8(candidate.pseudo), "@aantonop", 
+      hexToUtf8(candidate.pseudo), "@aantonop", 
       "candidate.pseudo is different than '@aantonop'"
     );
     assert.equal(
-      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
-      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+      candidate.identity.valueOf(), "0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1", 
+      "candidate.identity is different than 0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1"
     );
     assert.equal(
       candidate.voteCount.toNumber(), 0, 
@@ -90,10 +92,10 @@ contract('CommunityElector', function (accounts) {
 
   it("should reject vote while startVotingBlock has not been reached", async function() {
     const startVotingBlock = await communityElector.startVotingBlock.call();
-    const blockNumber = web3.eth.blockNumber;
+    const blockNumber = await web3.eth.getBlockNumber();
 
     assert.isBelow(
-      blockNumber, startVotingBlock, 
+      blockNumber, startVotingBlock.toNumber(), 
       "Current blockHeight is not strictly below startVotingBlock which is mandatory to trigger revert()"
     );
 	  
@@ -109,7 +111,7 @@ contract('CommunityElector', function (accounts) {
 
  it("should check ElectionState event TRUE by having the FIRST vote after startVotingBlock has been reach", async function() {
     const startVotingBlock = await communityElector.startVotingBlock.call();
-    let blockNumber = web3.eth.blockNumber;
+    let blockNumber = await web3.eth.getBlockNumber();
     
     /**
       * As it takes a while to go mine a test block,
@@ -118,7 +120,7 @@ contract('CommunityElector', function (accounts) {
       */
     while (blockNumber < startVotingBlock) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
 
     let candidate0Info = await communityElector.getCandidate.call(account0);
@@ -169,16 +171,16 @@ contract('CommunityElector', function (accounts) {
   it("should write CommunityCandidate contract by voting", async function() {
     await communityElector.electorVote(account0, {from: account1});
 
-    const candidate = {};
-    [candidate.pseudo, candidate.identity, candidate.voteCount] = await communityElector.getCandidate.call(account0);
+    const candidate_res = await communityElector.getCandidate.call(account0);
+    const candidate = { 'pseudo': candidate_res['0'], 'identity': candidate_res['1'], 'voteCount': candidate_res['2']};
 
     assert.equal(
-      web3.toUtf8(candidate.pseudo), "@aantonop", 
+      hexToUtf8(candidate.pseudo), "@aantonop", 
       "candidate.pseudo is different than '@aantonop'"
     );
     assert.equal(
-      candidate.identity.valueOf(), "0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1", 
-      "candidate.identity is different than 0xfc4fa36a7ec9e1455cbc0e3ae5187cbd8ef6b2b1"
+      candidate.identity.valueOf(), "0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1", 
+      "candidate.identity is different than 0xfc4FA36a7Ec9e1455cbc0E3ae5187Cbd8Ef6B2B1"
     );
     assert.equal(
       candidate.voteCount.toNumber(), 2, 
@@ -199,13 +201,13 @@ contract('CommunityElector', function (accounts) {
 
   it("should check ElectionState event FALSE by having the LAST vote after or equals endVotingBlock has been reach", async function() {
     const endVotingBlock = await communityElector.endVotingBlock.call();
-    let blockNumber = web3.eth.blockNumber;
+    let blockNumber = await web3.eth.getBlockNumber();
 
     // - 1 because the voting tx will when mined be it will match exactly endVotingBlock value
     // and the (block.number >= endVotingBlock && isElectionOpen) condition
     while (blockNumber < endVotingBlock - 1) {
       await helper.mineBlock();
-      blockNumber = web3.eth.blockNumber;
+      blockNumber = await web3.eth.getBlockNumber();
     }
 
     // The account2 votes and it's the last one so we catch the event
@@ -233,11 +235,11 @@ contract('CommunityElector', function (accounts) {
   });
 
   it("should fail to vote as the startVotingBlock has been updated previously", async function() {
-    const blockNumber = web3.eth.blockNumber;
+    const blockNumber = await web3.eth.getBlockNumber();
     const startVotingBlock = await communityElector.startVotingBlock.call();
 
     assert.isBelow(
-      blockNumber, startVotingBlock, 
+      blockNumber, startVotingBlock.toNumber(),
       "blockNumber should not be equal or above startVotingBlock"
     );
     
